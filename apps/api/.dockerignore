@@ -1,0 +1,17 @@
+# Git
+.gitignore
+
+# Secrets
+.env
+.env.*
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+
+# Docs e testes 
+docs/
+tests/
+*.md

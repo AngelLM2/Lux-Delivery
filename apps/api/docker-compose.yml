@@ -1,0 +1,100 @@
+services:
+  api:
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lux-delivery/api:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Sobrescreve DATABASE_URL e REDIS_URL com hostnames internos do Docker
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      PYTHONPATH: /app
+    ports:
+      - '8000:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://localhost:8000/")']
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+          
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a $$REDIS_PASSWORD ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+
+  migrate:
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PYTHONPATH: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ['alembic', 'upgrade', 'head']
+    restart: on-failure
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:

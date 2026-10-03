@@ -1,0 +1,14 @@
+# Secrets — nunca commitar
+.env
+.env.*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Docs gerados
+docs/
