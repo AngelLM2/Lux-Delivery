@@ -1,7 +1,0 @@
-export * from './Navbar'
-export * from './Sidebar'
-export * from './PageWrapper'
-export * from './PageLoader'
-export * from './CustomCursor'
-export * from './ErrorBoundary'
-export * from './ProtectedRoute'

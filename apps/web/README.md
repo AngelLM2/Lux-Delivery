@@ -1,9 +1,9 @@
-﻿# Lux Delivery Front-End
+# Lux Delivery Front-End
 
-English | [Portugues (BR)](./README.pt-BR.md)
+English | [Português (BR)](./README.pt-BR.md)
 
 Premium food delivery front-end built with React + TypeScript + Vite.
-This app covers the full customer journey (browse menu, place orders, track delivery) and an admin workspace (dashboard, orders, products, categories, users).
+It covers the full customer journey (browse the menu, place orders, track deliveries live) and an admin workspace (dashboard, order board, products, categories, users).
 
 ## Table of contents
 1. [Overview](#overview)
@@ -20,147 +20,119 @@ This app covers the full customer journey (browse menu, place orders, track deli
 ## Overview
 Lux Delivery is a responsive SPA focused on:
 
-- A polished storefront experience with highlighted products and animated transitions.
-- Fast browsing with client-side filters and paginated product loading.
-- Cart and checkout flow connected to a backend API.
+- A polished storefront with highlighted products and animated transitions.
+- Server-side filtering and cursor pagination ("Carregar mais" / infinite scroll).
+- A checkout that can be retried safely (idempotent order creation).
 - Role-based areas for customers and admins.
-- Live-like operational workflows (order status updates, notifications, analytics).
+- Real-time order tracking, notifications and an operations board over Server-Sent Events.
 
 ## Tech stack
-- React 18 + TypeScript
+- React 18 + TypeScript (strict)
 - Vite 7
 - React Router DOM 6
-- TanStack Query (server state + caching)
-- Zustand (UI and client state)
+- TanStack Query 5 (server state, cache, infinite queries)
+- Zustand (auth, cart and UI state)
 - Axios (API client + interceptors)
-- Framer Motion (page transitions)
-- Lucide React (icons)
-- ESLint 9
+- openapi-typescript (API types generated from the backend contract)
+- Framer Motion (page transitions), Lucide React (icons)
+- Vitest + Testing Library, ESLint 9
 
 ## Core features
 ### Customer area
 - Landing page with highlighted products.
-- Menu with category filters, debounced search, and infinite loading support.
-- Cart drawer with quantity control, address, and notes.
-- Order creation and order history.
-- Order detail page with timeline/tracking.
-- Notifications view with unread filter and mark-as-read.
-- Profile page with personal data and password update.
+- Menu with category filter and search resolved by the API, plus infinite loading.
+- "Sold out" products cannot be added to the cart.
+- Cart drawer with quantity control, address and notes; checkout sends an `Idempotency-Key`.
+- Order history and order detail with a live timeline ("Ao vivo" indicator).
+- Notifications with unread badge, filter, mark one / mark all as read.
+- Profile with personal data and password change.
 
 ### Admin area
-- Dashboard with KPI cards and order status chart.
-- Order management with controlled status transitions (`created -> confirmed -> preparing -> out_for_delivery -> delivered`), cancel flow where allowed, and optional status notes.
-- Product management (create/update/delete + image upload).
-- Category management (create/update/delete).
-- User management (activate/deactivate).
+- Dashboard: KPIs (orders, revenue, average ticket, cancel rate, end-to-end p50/p90), daily revenue/orders chart (dependency-free SVG), status breakdown, time per stage and top products, for 7/30/90 days.
+- Live order board: status tabs, one-click "advance to next status" (`created -> confirmed -> preparing -> out_for_delivery -> delivered`), cancel with optional reason, conflict (409) handling.
+- Products: create/edit, image upload, availability, archive/restore.
+- Categories: create/edit/delete with menu position.
+- Users: filter by role, search, create (with role), activate/deactivate.
 
 ### Reliability and UX details
-- Route-level code splitting with `lazy` + `Suspense`.
-- Global `ErrorBoundary` fallback.
-- Toast feedback system for API and UX events.
-- Session recovery via refresh token endpoint.
-- Optimistic updates in selected order/notification flows.
+- Route-level code splitting with `lazy` + `Suspense`; global `ErrorBoundary` that resets on navigation.
+- Single-flight session refresh shared by API calls and the SSE reconnection.
+- SSE reconnection with exponential backoff + jitter and a cache resync after reconnecting.
+- Only network/5xx errors are retried; 5xx toasts include a short request id for support.
+- User-scoped cache is cleared on logout.
 
 ## Project structure
 ```text
-Front-End/
-|- public/
-|- src/
-|  |- api/           # Axios client + API modules + shared types
-|  |- components/    # Reusable UI and feature components
-|  |- hooks/         # Query hooks and UI behavior hooks
-|  |- pages/         # Route pages (customer + admin)
-|  |- stores/        # Zustand stores (auth, cart, UI)
-|  |- styles/        # Global and feature styles
-|  |- utils/         # Formatters, validators, error helpers
-|  |- App.tsx
-|  |- main.tsx
-|- .env.example
-|- package.json
-|- vite.config.ts
+src/
+|- app/                 # App shell, routes (lazy pages), providers, realtime (SSE)
+|- features/
+|  |- auth/             # api, zustand store, login/register pages, ProtectedRoute
+|  |- catalog/          # api, query hooks, product components, home + menu pages
+|  |- cart/             # cart store, checkout drawer
+|  |- orders/           # api, hooks, status rules, order components and pages
+|  |- notifications/    # api, hooks, notifications page
+|  |- profile/          # profile api + page
+|  |- admin/            # layout, dashboard/board/CRUD pages, charts and tables
+|- shared/
+|  |- api/              # axios client, generated schema.d.ts, type aliases, pagination
+|  |- ui/               # design-system primitives (Button, Modal, Toast, ...)
+|  |- layout/           # Navbar, Sidebar, PageWrapper, ErrorBoundary, ...
+|  |- hooks/            # useDebounce, usePageMeta, useScrollReveal, useIdempotencyKey
+|  |- lib/              # formatters, validators, errors, backoff
+|  |- stores/           # UI store (toasts, cart drawer)
+|  |- styles/           # global styles and tokens
+|- test/                # test setup and fixtures
+|- main.tsx
+openapi.json            # backend contract (source of truth for src/shared/api/schema.d.ts)
 ```
 
 ## Requirements
-- Node.js 20+ (recommended for Vite 7 projects)
-- npm 10+ (or compatible package manager)
-- Lux Delivery backend API running (default: `http://localhost:8000`)
+- Node.js 22+ and npm 10+
+- Lux Delivery API running (default: `http://localhost:8000`)
 
 ## Environment variables
-Create a `.env` file in the project root:
+Create a `.env` file (see `.env.example`):
 
 ```bash
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=/api/v1
 ```
 
 Notes:
-- If `VITE_API_URL` is not set, the app falls back to `/api`.
-- In local development, Vite proxy forwards `/api` to `http://localhost:8000`.
+- The app is same-origin by design: in development Vite proxies `/api` and `/media` to `http://localhost:8000`; in production nginx does the same. HttpOnly `SameSite` session cookies and SSE work without CORS.
+- If `VITE_API_URL` is not set, the client falls back to `/api/v1`.
 
 ## Getting started
-1. Install dependencies:
-
 ```bash
 npm install
-```
-
-2. Create your local env file:
-
-```bash
-cp .env.example .env
-```
-
-PowerShell alternative:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-3. Start development server:
-
-```bash
-npm run dev
-```
-
-4. Open:
-
-```text
-http://localhost:3000
+cp .env.example .env   # PowerShell: Copy-Item .env.example .env
+npm run dev            # http://localhost:3000
 ```
 
 ## Available scripts
 | Script | Description |
 | --- | --- |
-| `npm run dev` | Starts Vite dev server on port `3000` |
-| `npm run build` | Type-checks and builds production bundle |
-| `npm run preview` | Serves built app locally for preview |
-| `npm run lint` | Runs ESLint over the project |
+| `npm run dev` | Vite dev server on port `3000` |
+| `npm run build` | Type-checks and builds the production bundle |
+| `npm run preview` | Serves the built app locally |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc -b` |
+| `npm test` / `npm run test:watch` | Vitest (jsdom) |
+| `npm run gen:api` | Regenerates `src/shared/api/schema.d.ts` from `openapi.json` |
+| `npm run check:api` | Fails if the committed types drifted from `openapi.json` (CI) |
 
 ## Routing and access control
-Public routes:
-- `/`
-- `/menu`
-- `/login`
-- `/register`
+Public routes: `/`, `/menu`, `/login`, `/register`.
 
-Authenticated routes:
-- `/orders`
-- `/orders/:id`
-- `/notifications`
-- `/profile`
+Authenticated routes: `/orders`, `/orders/:id`, `/notifications`, `/profile`.
 
-Admin-only routes:
-- `/admin`
-- `/admin/orders`
-- `/admin/products`
-- `/admin/categories`
-- `/admin/users`
+Admin-only routes: `/admin`, `/admin/orders`, `/admin/products`, `/admin/categories`, `/admin/users`.
 
-Access control is handled by `ProtectedRoute` and user role (`admin` or `customer`).
+`ProtectedRoute` waits for the session check, sends anonymous users to `/login` (and back to the requested page after signing in) and keeps non-admins out of `/admin`.
 
 ## API integration notes
-- `axios` client is configured with `withCredentials: true`.
-- Auth uses HTTP-only cookies and refresh flow via `/auth/refresh`.
-- On `401`, the client tries token refresh before redirecting to `/login`.
-- Query/mutation state is handled with TanStack Query (cache + invalidation).
-- API errors are surfaced through toast notifications and field-level mapping helpers.
-
+- Contract-first: every API type is an alias of the types generated from `openapi.json` (`src/shared/api/types.ts`); a contract change becomes a compile error.
+- Errors follow `{ detail, code, request_id }`; `shared/lib/errors.ts` maps them to pt-BR messages and per-field form errors.
+- On `401` the client refreshes the session once (shared by concurrent requests) and replays the request; if another tab already rotated the refresh token (`refresh_token_rotated`) it simply replays.
+- List endpoints use cursor pagination (`{ items, next_cursor }`) with `useInfiniteQuery`.
+- `POST /orders` is sent with an `Idempotency-Key` that is reused on retries and renewed when the order content changes.
+- `GET /events/stream` (SSE) drives cache invalidation for orders and notifications in real time.
