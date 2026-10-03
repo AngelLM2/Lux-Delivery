@@ -1,0 +1,19 @@
+# Exemplo de deploy no Kubernetes (docs/07-escalabilidade, estagio 4).
+#   kubectl apply -k infra/k8s
+# Postgres e Redis ficam fora do cluster, como servicos gerenciados.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: lux
+resources:
+  - namespace.yaml
+  - config.yaml
+  - migrate-job.yaml
+  - api.yaml
+  - worker.yaml
+  - web.yaml
+  - ingress.yaml
+images:
+  - name: lux-delivery/api
+    newTag: "3.0.0"
+  - name: lux-delivery/web
+    newTag: "3.0.0"

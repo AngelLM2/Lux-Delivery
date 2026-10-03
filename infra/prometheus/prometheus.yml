@@ -1,0 +1,31 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  # DNS service discovery finds every replica of the service (docker compose --scale / k8s headless svc).
+  - job_name: lux-api
+    metrics_path: /metrics
+    dns_sd_configs:
+      - names: [api]
+        type: A
+        port: 8000
+        refresh_interval: 15s
+
+  - job_name: lux-worker
+    dns_sd_configs:
+      - names: [worker]
+        type: A
+        port: 9101
+        refresh_interval: 15s
+
+  - job_name: postgres
+    static_configs:
+      - targets: [postgres-exporter:9187]
+
+  - job_name: redis
+    static_configs:
+      - targets: [redis-exporter:9121]

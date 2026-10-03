@@ -1,0 +1,23 @@
+# Migrations rodam UMA vez por release, antes do rollout (hook do Argo CD ou passo do pipeline),
+# nunca no startup de cada pod: N pods subindo = N migrations concorrentes.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: lux-migrate
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: lux-delivery/api
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef: {name: lux-config}
+            - secretRef: {name: lux-secrets}
+          env:
+            # DDL precisa de conexao de sessao, nao de transaction pooling do PgBouncer.
+            - name: DATABASE_URL
+              valueFrom: {secretKeyRef: {name: lux-secrets, key: DIRECT_DATABASE_URL}}

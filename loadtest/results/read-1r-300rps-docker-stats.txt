@@ -1,0 +1,6 @@
+lux_delivery-api-1 47.81% 109.4MiB / 5.786GiB lux_delivery-db-1 3.20% 222.9MiB / 5.786GiB lux_delivery-redis-1 3.39% 4.641MiB / 5.786GiB 
+lux_delivery-api-1 83.49% 110.2MiB / 5.786GiB lux_delivery-db-1 6.48% 223.1MiB / 5.786GiB lux_delivery-redis-1 5.78% 4.723MiB / 5.786GiB 
+lux_delivery-api-1 82.53% 109MiB / 5.786GiB lux_delivery-db-1 11.47% 222.8MiB / 5.786GiB lux_delivery-redis-1 9.23% 4.867MiB / 5.786GiB 
+lux_delivery-api-1 132.72% 121.1MiB / 5.786GiB lux_delivery-db-1 6.85% 222.9MiB / 5.786GiB lux_delivery-redis-1 5.77% 5.047MiB / 5.786GiB 
+lux_delivery-api-1 100.23% 109.5MiB / 5.786GiB lux_delivery-db-1 5.36% 239MiB / 5.786GiB lux_delivery-redis-1 3.96% 5.449MiB / 5.786GiB 
+lux_delivery-api-1 38.78% 109.9MiB / 5.786GiB lux_delivery-db-1 8.92% 221.9MiB / 5.786GiB lux_delivery-redis-1 3.56% 5.445MiB / 5.786GiB 

@@ -1,0 +1,22 @@
+# Teste de carga com k6 contra o nginx (combine com docker-compose.scale.yml para 1 vs 3 replicas).
+#   docker compose -f docker-compose.yml -f docker-compose.loadtest.yml up -d --build
+#   docker compose -f docker-compose.yml -f docker-compose.loadtest.yml run --rm k6 run /scripts/browse.js
+#   docker compose -f docker-compose.yml -f docker-compose.loadtest.yml run --rm k6 run /scripts/checkout.js
+# Rate limit por IP desligado: todo o trafego do k6 sai de um unico IP.
+
+services:
+  api:
+    environment:
+      RATE_LIMIT_ENABLED: "false"
+      LOG_LEVEL: WARNING
+
+  k6:
+    image: grafana/k6:1.3.0
+    profiles: ["loadtest"]
+    volumes:
+      - ./loadtest/k6:/scripts:ro
+      - ./loadtest/results:/results
+    environment:
+      BASE_URL: http://web
+    depends_on:
+      - web

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lux-worker
+  labels: {app: lux-worker}
+spec:
+  # Seguro com N replicas: o outbox usa SKIP LOCKED, os consumers dividem consumer groups do
+  # Redis e a manutencao pega um advisory lock no Postgres.
+  replicas: 2
+  selector:
+    matchLabels: {app: lux-worker}
+  template:
+    metadata:
+      labels: {app: lux-worker}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9101"
+    spec:
+      containers:
+        - name: worker
+          image: lux-delivery/api
+          command: ["python", "-m", "app.workers"]
+          envFrom:
+            - configMapRef: {name: lux-config}
+            - secretRef: {name: lux-secrets}
+          env:
+            # LISTEN/NOTIFY exige conexao direta (de sessao) com o Postgres.
+            - name: DATABASE_URL
+              valueFrom: {secretKeyRef: {name: lux-secrets, key: DIRECT_DATABASE_URL}}
+            - name: DB_BEHIND_PGBOUNCER
+              value: "false"
+          ports: [{containerPort: 9101, name: metrics}]
+          resources:
+            requests: {cpu: 100m, memory: 192Mi}
+            limits: {memory: 384Mi}
+          livenessProbe:
+            httpGet: {path: /metrics, port: metrics}
+            periodSeconds: 15

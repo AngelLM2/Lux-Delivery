@@ -1,0 +1,8 @@
+Client:ClientRead idle in transaction|14 IO:WalSync active|1 lux_delivery-api-1=98.57% lux_delivery-db-1=29.29% 
+Client:ClientRead idle in transaction|12 lux_delivery-api-1=141.16% lux_delivery-db-1=28.29% 
+Client:ClientRead idle in transaction|18 lux_delivery-api-1=99.12% lux_delivery-db-1=27.24% 
+Client:ClientRead idle in transaction|16 IO:WalSync active|1 lux_delivery-api-1=98.54% lux_delivery-db-1=28.95% 
+Client:ClientRead idle in transaction|17 IO:WalSync active|1 lux_delivery-api-1=99.16% lux_delivery-db-1=30.68% 
+Client:ClientRead idle in transaction|13 lux_delivery-api-1=99.11% lux_delivery-db-1=34.16% 
+Client:ClientRead idle in transaction|15 lux_delivery-api-1=100.06% lux_delivery-db-1=37.27% 
+Client:ClientRead idle in transaction|19 lux_delivery-api-1=62.05% lux_delivery-db-1=28.73% 

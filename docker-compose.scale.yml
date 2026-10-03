@@ -1,0 +1,48 @@
+# Escala horizontal local: 3 replicas stateless da API atras do nginx + PgBouncer (docs/07-escalabilidade, estagio 3).
+#   docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d --build
+#   (acesse pelo nginx: http://localhost:8080 — a porta 8000 deixa de ser publicada)
+
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.24.1-p1
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: lux
+      DB_PASSWORD: lux
+      DB_NAME: lux_delivery
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "2000"
+      DEFAULT_POOL_SIZE: "20"
+      RESERVE_POOL_SIZE: "5"
+      SERVER_RESET_QUERY: ""
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,statement_timeout
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    deploy:
+      replicas: 3
+    ports: !reset []
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lux:lux@pgbouncer:5432/lux_delivery
+      DB_BEHIND_PGBOUNCER: "true"
+      # Small pools per replica: PgBouncer does the real pooling.
+      DB_POOL_SIZE: "10"
+      DB_MAX_OVERFLOW: "10"
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+
+  # The worker keeps a direct connection: LISTEN/NOTIFY needs a session-level connection,
+  # which transaction pooling cannot provide.
+  worker:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lux:lux@db:5432/lux_delivery

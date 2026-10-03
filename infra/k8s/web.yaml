@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lux-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: lux-web}
+  template:
+    metadata:
+      labels: {app: lux-web}
+    spec:
+      containers:
+        - name: web
+          image: lux-delivery/web
+          ports: [{containerPort: 80, name: http}]
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {memory: 128Mi}
+          readinessProbe:
+            httpGet: {path: /, port: http}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lux-web
+spec:
+  selector: {app: lux-web}
+  ports: [{name: http, port: 80, targetPort: http}]

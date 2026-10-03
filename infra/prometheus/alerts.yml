@@ -1,0 +1,76 @@
+# Symptom-based alerts first (what users feel), causes second (what to look at).
+groups:
+  - name: lux-slo
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(lux_http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(lux_http_requests_total[5m])), 1) > 0.01
+        for: 5m
+        labels: {severity: page}
+        annotations:
+          summary: "Mais de 1% das requisicoes com 5xx (SLO de disponibilidade em risco)"
+          runbook: "docs/10-observabilidade-e-runbooks.md#alta-taxa-de-5xx"
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(lux_http_request_duration_seconds_bucket{route!="/api/v1/events/stream"}[5m]))) > 0.5
+        for: 10m
+        labels: {severity: page}
+        annotations:
+          summary: "p95 de latencia acima de 500 ms"
+          runbook: "docs/10-observabilidade-e-runbooks.md#latencia-alta"
+
+      - alert: ApiInstanceDown
+        expr: up{job="lux-api"} == 0
+        for: 2m
+        labels: {severity: ticket}
+        annotations:
+          summary: "Uma replica da API nao responde ao scrape"
+
+  - name: lux-async
+    rules:
+      - alert: OutboxBacklog
+        expr: max(lux_outbox_pending) > 500
+        for: 5m
+        labels: {severity: ticket}
+        annotations:
+          summary: "Eventos parados no outbox (worker caido ou Redis indisponivel)"
+          runbook: "docs/10-observabilidade-e-runbooks.md#backlog-no-outbox"
+
+      - alert: WorkerDown
+        expr: absent(up{job="lux-worker"} == 1)
+        for: 2m
+        labels: {severity: page}
+        annotations:
+          summary: "Nenhum worker ativo: notificacoes e tempo real parados"
+
+      - alert: DeadLetterGrowing
+        expr: increase(redis_stream_length{stream="lux:events:dlq"}[15m]) > 0
+        labels: {severity: ticket}
+        annotations:
+          summary: "Eventos indo para a dead-letter queue (bug em consumer)"
+          runbook: "docs/10-observabilidade-e-runbooks.md#dead-letter-queue"
+
+  - name: lux-capacity
+    rules:
+      - alert: PostgresConnectionsNearLimit
+        expr: sum(pg_stat_activity_count) / max(pg_settings_max_connections) > 0.8
+        for: 5m
+        labels: {severity: ticket}
+        annotations:
+          summary: "Postgres acima de 80% de max_connections — hora do PgBouncer (docs/07)"
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / clamp_min(redis_memory_max_bytes, 1) > 0.85
+        for: 10m
+        labels: {severity: ticket}
+        annotations:
+          summary: "Redis acima de 85% da memoria configurada"
+
+      - alert: RateLimitSpike
+        expr: sum(rate(lux_rate_limited_total[5m])) > 5
+        for: 10m
+        labels: {severity: info}
+        annotations:
+          summary: "Muitas requisicoes bloqueadas pelo rate limit (abuso ou limite baixo demais)"

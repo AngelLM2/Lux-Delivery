@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lux-api
+  labels: {app: lux-api}
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0} # rollout sem downtime
+  selector:
+    matchLabels: {app: lux-api}
+  template:
+    metadata:
+      labels: {app: lux-api}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector: {matchLabels: {app: lux-api}}
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: api
+          image: lux-delivery/api
+          ports: [{containerPort: 8000, name: http}]
+          envFrom:
+            - configMapRef: {name: lux-config}
+            - secretRef: {name: lux-secrets}
+          resources:
+            requests: {cpu: 250m, memory: 256Mi}
+            # Sem limite de CPU: evita throttling do CFS em pods sensiveis a latencia.
+            limits: {memory: 512Mi}
+          readinessProbe:
+            httpGet: {path: /health/ready, port: http}
+            periodSeconds: 5
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 2
+            failureThreshold: 30
+          lifecycle:
+            # Da tempo ao load balancer de parar de rotear antes do uvicorn drenar as conexoes.
+            preStop: {exec: {command: ["sleep", "5"]}}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: tmp, emptyDir: {}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lux-api
+spec:
+  selector: {app: lux-api}
+  ports: [{name: http, port: 8000, targetPort: http}]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: lux-api
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: lux-api}
+  minReplicas: 3
+  maxReplicas: 30
+  metrics:
+    - type: Resource
+      resource: {name: cpu, target: {type: Utilization, averageUtilization: 65}}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # evita "flapping" depois do pico do almoco
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: lux-api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels: {app: lux-api}

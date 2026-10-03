@@ -1,0 +1,124 @@
+# Lux Delivery — stack completa de desenvolvimento.
+#   docker compose up --build            -> http://localhost:8080 (app)  |  http://localhost:8000/docs (API)
+# Overlays (-f): docker-compose.{scale,observability,s3,loadtest}.yml. Portas 5433/6380 evitam conflito local.
+
+x-api-env: &api-env
+  ENV: development
+  LOG_JSON: "true"
+  DATABASE_URL: postgresql+asyncpg://lux:lux@db:5432/lux_delivery
+  REDIS_URL: redis://redis:6379/0
+  SECRET_KEY: ${SECRET_KEY:-dev-only-insecure-secret-change-me-0123456789abcdef}
+  CORS_ORIGINS: http://localhost:8080,http://localhost:3000
+  # Containers on the compose network (nginx) may set X-Forwarded-For.
+  TRUSTED_PROXIES: 127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+  MEDIA_ROOT: /app/media
+  BOOTSTRAP_ADMIN_TOKEN: ${BOOTSTRAP_ADMIN_TOKEN:-}
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lux
+      POSTGRES_PASSWORD: lux
+      POSTGRES_DB: lux_delivery
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - max_connections=200
+      - -c
+      - log_min_duration_statement=250
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lux -d lux_delivery"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    # One Redis for cache + rate limit + streams: evict only keys with TTL (cache, limits),
+    # never the event stream. At scale these become separate instances (docs/07).
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "volatile-lru"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: ./apps/api
+    image: lux-delivery/api:dev
+    environment: *api-env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    image: lux-delivery/api:dev
+    environment: *api-env
+    command: ["python", "-m", "app.scripts.seed"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  api:
+    image: lux-delivery/api:dev
+    restart: unless-stopped
+    environment: *api-env
+    ports:
+      - "8000:8000"
+    volumes:
+      - media:/app/media
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: lux-delivery/api:dev
+    restart: unless-stopped
+    environment: *api-env
+    command: ["python", "-m", "app.workers"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9101/metrics', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+
+  web:
+    build: ./apps/web
+    image: lux-delivery/web:dev
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  redis_data:
+  media:

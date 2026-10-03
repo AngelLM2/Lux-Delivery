@@ -1,0 +1,8 @@
+lux_delivery-web-1=11.22% lux_delivery-api-1=99.66% lux_delivery-api-2=97.05% lux_delivery-api-3=100.25% lux_delivery-worker-1=92.93% lux_delivery-pgbouncer-1=62.84% lux_delivery-db-1=96.14% lux_delivery-redis-1=19.19% 
+Client:ClientRead active=1 Client:ClientRead idle in transaction=17 IO:WalSync active=1 LWLock:WALWrite active=2 
+lux_delivery-web-1=8.97% lux_delivery-api-1=99.74% lux_delivery-api-2=98.71% lux_delivery-api-3=100.30% lux_delivery-worker-1=90.64% lux_delivery-pgbouncer-1=57.56% lux_delivery-db-1=99.87% lux_delivery-redis-1=13.42% 
+Client:ClientRead active=3 Client:ClientRead idle in transaction=19 
+lux_delivery-web-1=7.82% lux_delivery-api-1=98.32% lux_delivery-api-2=99.90% lux_delivery-api-3=99.90% lux_delivery-worker-1=95.98% lux_delivery-pgbouncer-1=58.57% lux_delivery-db-1=88.46% lux_delivery-redis-1=17.46% 
+Client:ClientRead active=1 Client:ClientRead idle in transaction=20 
+lux_delivery-web-1=6.81% lux_delivery-api-1=99.93% lux_delivery-api-2=99.62% lux_delivery-api-3=97.34% lux_delivery-worker-1=92.76% lux_delivery-pgbouncer-1=56.28% lux_delivery-db-1=92.67% lux_delivery-redis-1=11.30% 
+Client:ClientRead idle in transaction=19 IO:WalSync active=1 Lock:object active=1 CPU:- active=1 

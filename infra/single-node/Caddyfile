@@ -1,0 +1,17 @@
+# TLS automatico (Let's Encrypt) e HTTP/2/3. O nginx do container "web" continua fazendo o
+# roteamento /api, /media e SPA; o Caddy so termina TLS e aplica headers de borda.
+{$DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		-Server
+	}
+	reverse_proxy web:80 {
+		# SSE: entrega cada evento imediatamente
+		flush_interval -1
+	}
+	log {
+		output stdout
+		format json
+	}
+}

@@ -1,0 +1,19 @@
+# Secrets (examples are versioned)
+.env
+.env.*
+!.env.example
+!.env.prod.example
+infra/single-node/.env.prod
+
+# Local tooling / scratch
+.docker-fix.*
+.docker-check.txt
+loadtest/results/bg-*.log
+loadtest/results/deploy-probe.txt
+
+# Personal notes (kept locally, not published)
+docs/11-guia-de-entrevista.md
+docs/planejamento/
+
+# Editor / agent tooling
+.claude/
