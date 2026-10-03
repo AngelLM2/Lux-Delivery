@@ -1,0 +1,70 @@
+:root {
+  font-family: 'DM Sans', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.display-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.8rem, 8vw, 6.1rem);
+  font-weight: 500;
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+}
+
+.h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.9rem, 4.3vw, 3.1rem);
+  font-weight: 500;
+  margin: 0 0 0.5rem;
+}
+
+.h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 500;
+  margin: 0 0 0.4rem;
+}
+
+.h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.body-text {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--color-muted, #9ca3af);
+}
+
+.caption {
+  font-size: 0.78rem;
+  color: var(--color-faint, #6b7280);
+  line-height: 1.5;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--color-muted, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+}
+
+.price-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 1rem;
+  color: var(--color-ink, #f3f4f6);
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted, #9ca3af);
+}
