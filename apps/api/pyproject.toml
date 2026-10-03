@@ -1,0 +1,48 @@
+[project]
+name = "lux-delivery-api"
+version = "3.0.0"
+description = "Lux Delivery API - modular monolith (FastAPI, PostgreSQL, Redis)"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["alembic/versions/2b970ac17c6d_initial.py", "alembic/versions/a2988fe0d154_add_short_description_to_product.py", "alembic/versions/625b39c8b293_highlites.py", "alembic/versions/214646c73669_highlites_bool.py", "alembic/versions/c31e9a4f2f8b_add_image_url_to_product.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF", "SIM", "BLE"]
+ignore = [
+    "S101",    # assert is fine in tests
+    "B008",    # FastAPI's Depends() in defaults is idiomatic
+    "RUF001", "RUF002", "RUF003",  # pt-BR strings
+    "S105", "S106",  # token names are not secrets
+    "ASYNC109",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "BLE"]
+"app/scripts/**" = ["S311"]
+# Analytics SQL is assembled from constant fragments; every value is a bound parameter.
+"app/modules/analytics/service.py" = ["S608"]
+# Migrations build DDL from module constants (table/constraint names), never from user input.
+"alembic/versions/**" = ["S608"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: needs PostgreSQL and Redis",
+]
+filterwarnings = ["ignore::DeprecationWarning:websockets.*", "ignore::DeprecationWarning:uvicorn.protocols.*"]
+
+[tool.coverage.run]
+source = ["app"]
+concurrency = ["thread", "greenlet"]
+omit = ["app/scripts/*", "app/workers/__main__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

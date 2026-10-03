@@ -1,17 +1,12 @@
-# Git
-.gitignore
-
-# Secrets
+.git
+.venv
 .env
 .env.*
-
-# Python
-.venv/
-__pycache__/
-.pytest_cache/
-
-
-# Docs e testes 
-docs/
-tests/
-*.md
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+media
+tests

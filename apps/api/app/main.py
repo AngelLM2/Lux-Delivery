@@ -1,102 +1,102 @@
-from contextlib import asynccontextmanager
 import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from sqlalchemy import text
+from fastapi.staticfiles import StaticFiles
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from app.core.redis_client import close_redis, get_redis
-from app.middleware.rate_limit import rate_limit_middleware
-from app.middleware.security_headers import SecurityHeadersMiddleware
-from app.database import Base, engine
-from app.config import settings
-from app.routers import (
-    analytics_router,
-    auth_router,
-    category_router,
-    notification_router,
-    order_router,
-    product_router,
-    user_router,
+import app.models
+from app.core import health
+from app.core.config import settings
+from app.core.database import engine, read_engine
+from app.core.errors import install_exception_handlers
+from app.core.logging import configure_logging
+from app.core.middleware import (
+    LoadShedMiddleware,
+    ObservabilityMiddleware,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
 )
+from app.core.realtime import hub
+from app.core.redis import close_redis
+from app.modules.analytics.router import router as analytics_router
+from app.modules.catalog.router import categories_router, products_router
+from app.modules.identity.router import auth_router, users_router
+from app.modules.notifications.router import router as notifications_router
+from app.modules.ordering.router import router as orders_router
+from app.modules.realtime.router import router as realtime_router
 
 logger = logging.getLogger(__name__)
 
-_IS_PRODUCTION = settings.is_production
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        r = await get_redis()
-        await r.ping()
-        logger.info("Redis conectado com sucesso.")
-    except Exception as exc:
-        logger.warning("Redis indisponivel no startup: %s", exc)
+    app.state.migration_head = health.expected_migration_head()
+    logger.info("startup", extra={"env": settings.ENV, "version": settings.APP_VERSION})
     yield
-    try:
-        await close_redis()
-    except Exception as exc:
-        logger.warning("Falha ao fechar Redis: %s", exc)
-    try:
-        await engine.dispose()
-    except Exception as exc:
-        logger.warning("Falha ao fechar engine do banco: %s", exc)
+    await hub.close()
+    await close_redis()
+    await engine.dispose()
+    if read_engine is not engine:
+        await read_engine.dispose()
+    logger.info("shutdown")
 
 
+def create_app() -> FastAPI:
+    configure_logging(settings.LOG_LEVEL, settings.LOG_JSON)
+    docs_enabled = not settings.is_production
+    app = FastAPI(
+        title=settings.APP_NAME,
+        version=settings.APP_VERSION,
+        description="API de delivery: catalogo, pedidos com rastreio em tempo real, notificacoes e analytics.",
+        lifespan=lifespan,
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
+    )
 
-app = FastAPI(
-    title="Lux Delivery API",
-    version="2.0",
-    lifespan=lifespan,
-    docs_url=None if _IS_PRODUCTION else "/docs",
-    redoc_url=None if _IS_PRODUCTION else "/redoc",
-    openapi_url=None if _IS_PRODUCTION else "/openapi.json",
-)
+    # Starlette runs middlewares in reverse order of registration: the last added is outermost.
+    app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=5)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "Idempotency-Key", "X-Request-ID", "X-Bootstrap-Token"],
+        expose_headers=["X-Request-ID", "Retry-After", "Idempotent-Replayed"],
+    )
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(LoadShedMiddleware)
+    app.add_middleware(ObservabilityMiddleware)
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=settings.TRUSTED_PROXIES)
+
+    install_exception_handlers(app)
+
+    api = APIRouter(prefix=settings.API_PREFIX)
+    for router in (
+        auth_router,
+        users_router,
+        categories_router,
+        products_router,
+        orders_router,
+        notifications_router,
+        analytics_router,
+        realtime_router,
+    ):
+        api.include_router(router)
+    app.include_router(api)
+    app.include_router(health.router)
+
+    if settings.STORAGE_BACKEND == "local":
+        media_root = Path(settings.MEDIA_ROOT)
+        media_root.mkdir(parents=True, exist_ok=True)
+        app.mount(settings.MEDIA_URL, StaticFiles(directory=media_root), name="media")
+
+    return app
 
 
-origins = settings.CORS_ORIGINS
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Bootstrap-Token"],
-)
-app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=5)
-
-
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=settings.TRUSTED_PROXIES)
-app.add_middleware(SecurityHeadersMiddleware)
-app.middleware("http")(rate_limit_middleware)
-
-app.include_router(auth_router)
-app.include_router(user_router)
-app.include_router(product_router)
-app.include_router(category_router)
-app.include_router(order_router)
-app.include_router(notification_router)
-app.include_router(analytics_router)
-
-
-
-@app.get("/", tags=["health"])
-async def health():
-    from app.database import SessionLocal
-
-    db_ok = redis_ok = True
-    try:
-        async with SessionLocal() as s:
-            await s.execute(text("SELECT 1"))
-    except Exception:
-        db_ok = False
-    try:
-        r = await get_redis()
-        await r.ping()
-    except Exception:
-        redis_ok = False
-    overall = "ok" if (db_ok and redis_ok) else "degraded"
-    return {"status": overall, "db": db_ok, "redis": redis_ok}
+app = create_app()

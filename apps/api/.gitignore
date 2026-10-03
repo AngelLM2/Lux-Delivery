@@ -1,14 +1,20 @@
-# Secrets — nunca commitar
+# Secrets
 .env
 .env.*
+!.env.example
 
 # Python
 .venv/
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 .pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
-# Docs gerados
-docs/
+# Runtime data
+media/
+
+# Test artifacts
+tests/.media/
