@@ -1798,7 +1798,7 @@
           "realtime"
         ],
         "summary": "Stream",
-        "description": "Server-Sent Events for the logged-in user (and the admin board for admins).\n\nSSE instead of WebSocket: traffic is server -> client only, it is plain HTTP (works through\nproxies/CDNs, HTTP/2 multiplexing, automatic browser reconnection with ``retry``).\nThe stream ends when the access token expires so the browser re-authenticates.",
+        "description": "Server-Sent Events for the logged-in user (and the admin board for admins).\n\nEnds when the access token expires so the browser re-authenticates. See docs/adr/0005-sse-em-vez-de-websocket.md.",
         "operationId": "stream_api_v1_events_stream_get",
         "responses": {
           "200": {

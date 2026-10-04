@@ -491,9 +491,7 @@ export interface paths {
          * Stream
          * @description Server-Sent Events for the logged-in user (and the admin board for admins).
          *
-         *     SSE instead of WebSocket: traffic is server -> client only, it is plain HTTP (works through
-         *     proxies/CDNs, HTTP/2 multiplexing, automatic browser reconnection with ``retry``).
-         *     The stream ends when the access token expires so the browser re-authenticates.
+         *     Ends when the access token expires so the browser re-authenticates. See docs/adr/0005-sse-em-vez-de-websocket.md.
          */
         get: operations["stream_api_v1_events_stream_get"];
         put?: never;
