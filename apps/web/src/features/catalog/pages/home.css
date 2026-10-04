@@ -1,14 +1,13 @@
 /* LUX Home - Clean Elegant Design */
 
 .home {
-  --home-bg: #08090c;
-  --home-surface: #0e1015;
-  --home-card: #12161c;
-  --home-line: rgba(255, 255, 255, 0.1);
-  --home-ink: #f5f5f7;
-  --home-muted: #9ca3af;
-  --home-accent: #f5f5f7;
-  
+  --home-bg: var(--color-bg);
+  --home-surface: var(--color-surface);
+  --home-card: var(--color-surface);
+  --home-line: var(--color-line);
+  --home-ink: var(--color-ink);
+  --home-muted: var(--color-muted);
+
   background: var(--home-bg);
   color: var(--home-ink);
   min-height: 100vh;
@@ -40,18 +39,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.4;
+  opacity: 0.45;
+  animation: heroZoom 18s ease-out both;
 }
 
 .home-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(8, 9, 12, 0.3) 0%,
-    rgba(8, 9, 12, 0.6) 50%,
-    rgba(8, 9, 12, 1) 100%
-  );
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 45%, rgba(255, 255, 255, 0.07), transparent 70%),
+    linear-gradient(to bottom, rgba(8, 9, 12, 0.5) 0%, rgba(8, 9, 12, 0.72) 55%, rgba(8, 9, 12, 1) 100%);
 }
 
 .home-hero-content {
@@ -64,29 +61,34 @@
 
 .home-kicker {
   margin: 0 0 0.75rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--home-muted);
+  color: var(--color-muted);
 }
 
 .home-title {
   margin: 0;
+  padding-left: 0.15em;
   font-family: 'Cormorant Garamond', serif;
   font-size: clamp(4rem, 15vw, 8rem);
   font-weight: 400;
   letter-spacing: 0.15em;
-  line-height: 0.85;
+  line-height: 0.95;
+  background: linear-gradient(180deg, #ffffff 35%, #b8bec8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .home-subtitle {
-  margin: 1.5rem 0 0;
+  margin: 1.5rem auto 0;
   font-size: 1.1rem;
   line-height: 1.7;
-  color: var(--home-muted);
+  color: #c9cdd4;
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
 }
 
 /* CTA Button */
@@ -95,27 +97,28 @@
   align-items: center;
   gap: 0.75rem;
   margin-top: 2.5rem;
-  padding: 1rem 2rem;
-  background: var(--home-accent);
-  color: var(--home-bg);
-  border: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  padding: 1rem 2.1rem;
+  background: var(--gradient-accent);
+  color: var(--color-ink-dark);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
   transition:
     background-color 0.3s ease,
     border-color 0.3s ease,
     color 0.3s ease,
-    transform 0.3s ease,
+    transform 0.3s var(--ease-out),
     box-shadow 0.3s ease;
-  border-radius: 2px;
 }
 
 .home-cta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), var(--shadow-glow);
 }
 
 .home-cta:active {
@@ -123,7 +126,7 @@
 }
 
 .home-cta svg {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease-out);
 }
 
 .home-cta:hover svg {
@@ -133,13 +136,14 @@
 .home-cta-light {
   background: transparent;
   color: var(--home-ink);
-  border: 1px solid var(--home-line);
+  border: 1px solid var(--color-line-strong);
+  box-shadow: none;
 }
 
 .home-cta-light:hover {
-  background: var(--home-ink);
-  color: var(--home-bg);
-  border-color: var(--home-ink);
+  background: var(--gradient-accent);
+  color: var(--color-ink-dark);
+  border-color: transparent;
 }
 
 /* Sections */
@@ -166,8 +170,9 @@
   background: none;
   border: none;
   color: var(--home-muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
   padding: 0.5rem 0;
@@ -176,8 +181,8 @@
 }
 
 .home-link-btn:hover {
-  color: var(--home-ink);
-  border-bottom-color: var(--home-ink);
+  color: var(--color-ink);
+  border-bottom-color: var(--color-ink);
 }
 
 /* Grid */
@@ -189,29 +194,37 @@
 
 /* Card */
 .home-card {
-  background: var(--home-card);
+  background: var(--gradient-surface), var(--home-card);
   border: 1px solid var(--home-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
-  transition: border-color 0.3s ease, transform 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    transform 0.5s var(--ease-out),
+    box-shadow 0.5s var(--ease-out);
   overflow: hidden;
   opacity: 0;
-  animation: fadeUp 0.52s ease-out forwards;
+  animation: fadeUp 0.6s var(--ease-out) forwards;
   animation-delay: var(--stagger, 0ms);
 }
 
 .home-card:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
 }
 
 .home-card:focus-visible {
-  outline: 2px solid var(--home-ink);
-  outline-offset: 2px;
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
 }
 
 .home-card-image {
   position: relative;
   aspect-ratio: 4/3;
+  margin: 0.5rem 0.5rem 0;
+  border-radius: calc(var(--radius-lg) - 6px);
   overflow: hidden;
 }
 
@@ -219,58 +232,68 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.9s var(--ease-out);
 }
 
 .home-card:hover .home-card-image img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .home-card-tag {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  padding: 0.4rem 0.75rem;
-  background: var(--home-bg);
-  color: var(--home-ink);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+  background: rgba(8, 9, 12, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--color-ink);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .home-card-content {
-  padding: 1.25rem;
+  padding: 1.1rem 1.25rem 1.25rem;
 }
 
 .home-card-content h3 {
-  margin: 0 0 1rem;
+  margin: 0 0 0.6rem;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.5rem;
-  font-weight: 400;
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1.15;
 }
 
 .home-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-top: 0.95rem;
+  border-top: 1px solid var(--home-line);
 }
 
 .home-card-price {
-  font-family: 'DM Mono', monospace;
   font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
   color: var(--home-ink);
 }
 
 .home-card-action {
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--home-muted);
   transition: color 0.2s ease;
 }
 
 .home-card:hover .home-card-action {
-  color: var(--home-ink);
+  color: var(--color-ink);
 }
 
 /* CTA Section */
@@ -279,20 +302,27 @@
 }
 
 .home-cta-card {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
   padding: 3rem;
-  background: var(--home-surface);
-  border: 1px solid var(--home-line);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(ellipse 60% 120% at 100% 0%, rgba(255, 255, 255, 0.08), transparent 60%),
+    var(--gradient-surface),
+    var(--home-surface);
+  box-shadow: var(--shadow-lg);
 }
 
 .home-cta-text h2 {
   margin: 0 0 0.5rem;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 2rem;
-  font-weight: 400;
+  font-size: 2.3rem;
+  font-weight: 500;
 }
 
 .home-cta-text p {
@@ -322,14 +352,15 @@
 .home-footer-logo {
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.75rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
 }
 
 .home-footer-tagline {
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--home-muted);
+  color: var(--color-muted);
 }
 
 .home-footer-copy {
@@ -339,14 +370,12 @@
 }
 
 /* Animation */
-@keyframes fadeUp {
+@keyframes heroZoom {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: scale(1.08);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
 
@@ -355,13 +384,13 @@
   .home-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .home-cta-card {
     flex-direction: column;
     text-align: center;
     padding: 2.5rem;
   }
-  
+
   .home-cta-text p {
     max-width: none;
   }
@@ -371,36 +400,36 @@
   .home-hero {
     min-height: 75vh;
   }
-  
+
   .home-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .home-section {
     padding: 3rem 0;
   }
-  
+
   .home-section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
   }
-  
+
   .home-footer-content {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
   }
-  
+
   .home-footer-brand {
     align-items: center;
   }
-  
+
   .home-cta-card {
     padding: 2rem;
   }
-  
+
   .home-cta {
     width: 100%;
     justify-content: center;
@@ -416,9 +445,10 @@
 
 .home-card-highlights {
   margin: 0 0 1.2rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #f2c14e; /* brand accent color */
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #d1d5db;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -427,7 +457,8 @@
 .home-empty-state {
   margin: 0;
   padding: 1rem 1.25rem;
-  border: 1px dashed var(--home-line);
+  border: 1px dashed var(--color-line-strong);
+  border-radius: var(--radius-md);
   color: var(--home-muted);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -439,12 +470,12 @@
 }
 
 .skeleton-block {
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.05) 25%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(255, 255, 255, 0.05) 75%
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 75%
   );
   background-size: 600px 100%;
   animation: shimmer 1.4s infinite linear;
@@ -478,6 +509,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home-hero-content,
+  .home-hero-bg img,
   .home-card,
   .skeleton-block {
     animation: none;
@@ -486,4 +518,3 @@
     transform: none;
   }
 }
-

@@ -1,3 +1,4 @@
+import { LockKeyhole, Mail, Phone, Plus, Search, UserRound } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { UserRole } from '../../../shared/api/types'
 import { useDebounce } from '../../../shared/hooks/useDebounce'
@@ -9,10 +10,13 @@ import { Alert } from '../../../shared/ui/Alert'
 import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 import { EmptyState } from '../../../shared/ui/EmptyState'
-import { InputField, SelectField } from '../../../shared/ui/Input'
+import { InputField } from '../../../shared/ui/Input'
 import { LoadMore } from '../../../shared/ui/LoadMore'
+import { SelectField } from '../../../shared/ui/Select'
+import { SidePanel } from '../../../shared/ui/SidePanel'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { useAuthStore } from '../../auth/store'
+import { AdminPageHeader } from '../components/AdminPageHeader'
 import { useCreateUser, useSetUserActive, useUserList } from '../hooks'
 
 const ROLE_TABS: Array<{ label: string; role: UserRole | null }> = [
@@ -23,7 +27,7 @@ const ROLE_TABS: Array<{ label: string; role: UserRole | null }> = [
 
 const EMPTY_FORM = { full_name: '', email: '', phone: '', password: '', role: 'customer' as UserRole }
 
-const NewUserForm = () => {
+const NewUserForm = ({ onCreated }: { onCreated: () => void }) => {
   const createUser = useCreateUser()
   const [form, setForm] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -50,6 +54,7 @@ const NewUserForm = () => {
         role: form.role,
       })
       setForm(EMPTY_FORM)
+      onCreated()
     } catch (error) {
       const fields = getFieldErrors(error)
       setErrors(fields)
@@ -60,27 +65,55 @@ const NewUserForm = () => {
   }
 
   return (
-    <form className="card" onSubmit={handleSubmit} noValidate>
-      <h3 className="h3" style={{ margin: 0 }}>Novo usuário</h3>
+    <form className="admin-form" onSubmit={handleSubmit} noValidate>
       {formError && <Alert tone="danger">{formError}</Alert>}
-      <InputField label="Nome completo" value={form.full_name} onChange={(e) => update('full_name')(e.target.value)} error={errors.full_name} />
-      <InputField label="E-mail" type="email" value={form.email} onChange={(e) => update('email')(e.target.value)} error={errors.email} />
-      <InputField label="Telefone (opcional)" type="tel" value={form.phone} onChange={(e) => update('phone')(e.target.value)} error={errors.phone} />
+      <InputField
+        label="Nome completo"
+        icon={<UserRound size={17} />}
+        value={form.full_name}
+        onChange={(e) => update('full_name')(e.target.value)}
+        error={errors.full_name}
+      />
+      <InputField
+        label="E-mail"
+        type="email"
+        icon={<Mail size={17} />}
+        value={form.email}
+        onChange={(e) => update('email')(e.target.value)}
+        error={errors.email}
+      />
+      <InputField
+        label="Telefone (opcional)"
+        type="tel"
+        icon={<Phone size={17} />}
+        value={form.phone}
+        onChange={(e) => update('phone')(e.target.value)}
+        error={errors.phone}
+      />
       <InputField
         label="Senha inicial"
         type="password"
+        icon={<LockKeyhole size={17} />}
         autoComplete="new-password"
         value={form.password}
         onChange={(e) => update('password')(e.target.value)}
         error={errors.password}
       />
-      <SelectField label="Perfil" value={form.role} onChange={(e) => update('role')(e.target.value)} error={errors.role}>
-        <option value="customer">Cliente</option>
-        <option value="admin">Administrador</option>
-      </SelectField>
-      <Button variant="primary" type="submit" isLoading={createUser.isPending}>
-        Criar usuário
-      </Button>
+      <SelectField
+        label="Perfil"
+        value={form.role}
+        onChange={update('role')}
+        error={errors.role}
+        options={[
+          { value: 'customer', label: 'Cliente' },
+          { value: 'admin', label: 'Administrador' },
+        ]}
+      />
+      <div className="admin-form-actions">
+        <Button variant="primary" type="submit" isLoading={createUser.isPending}>
+          Criar usuário
+        </Button>
+      </div>
     </form>
   )
 }
@@ -89,6 +122,7 @@ export const AdminUsersPage = () => {
   const currentUserId = useAuthStore((state) => state.user?.id)
   const [role, setRole] = useState<UserRole | null>(null)
   const [search, setSearch] = useState('')
+  const [creating, setCreating] = useState(false)
   const q = useDebounce(search.trim(), 350)
   const usersQuery = useUserList({ role, q })
   const setActive = useSetUserActive()
@@ -96,63 +130,90 @@ export const AdminUsersPage = () => {
   usePageMeta('Usuários — Admin')
 
   return (
-    <div>
-      <header style={{ marginBottom: '1.5rem' }}>
-        <p className="kicker" style={{ marginBottom: '0.5rem' }}>Gestão</p>
-        <h2 className="h1" style={{ margin: 0 }}>Usuários</h2>
-      </header>
+    <div className="admin-page">
+      <AdminPageHeader
+        title="Usuários"
+        actions={
+          <Button variant="primary" icon={<Plus size={16} aria-hidden="true" />} onClick={() => setCreating(true)}>
+            Novo usuário
+          </Button>
+        }
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="card" style={{ display: 'grid', gap: '0.75rem', alignContent: 'start' }}>
-          <div className="filter-pills" role="group" aria-label="Filtrar por perfil">
+      <section className="card admin-card admin-list-card">
+        <div className="admin-toolbar">
+          <div className="segmented" role="group" aria-label="Filtrar por perfil">
             {ROLE_TABS.map((tab) => (
               <button
                 key={tab.label}
                 type="button"
                 aria-pressed={tab.role === role}
-                className={`filter-pill ${tab.role === role ? 'active' : ''}`}
+                className={tab.role === role ? 'active' : ''}
                 onClick={() => setRole(tab.role)}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <InputField
-            label="Buscar por nome ou e-mail (mín. 2 letras)"
-            type="search"
-            maxLength={60}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+          <div className="admin-toolbar-search">
+            <InputField
+              label="Buscar por nome ou e-mail"
+              hideLabel
+              type="search"
+              placeholder="Buscar por nome ou e-mail (mín. 2 letras)"
+              icon={<Search size={17} />}
+              maxLength={60}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+        </div>
 
-          {usersQuery.isPending ? (
-            Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} height={64} />)
-          ) : usersQuery.isError ? (
-            <Alert tone="danger">Não foi possível carregar os usuários.</Alert>
-          ) : usersQuery.users.length === 0 ? (
-            <EmptyState title="Nenhum usuário" description="Ajuste os filtros ou cadastre um novo usuário." />
-          ) : (
-            usersQuery.users.map((user) => {
+        {usersQuery.isPending ? (
+          <div className="admin-rows">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} height={60} />
+            ))}
+          </div>
+        ) : usersQuery.isError ? (
+          <Alert tone="danger">Não foi possível carregar os usuários.</Alert>
+        ) : usersQuery.users.length === 0 ? (
+          <EmptyState title="Nenhum usuário" description="Ajuste os filtros ou cadastre um novo usuário." />
+        ) : (
+          <ul className="admin-rows" aria-label="Usuários">
+            {usersQuery.users.map((user) => {
               const isSelf = user.id === currentUserId
               const pending = setActive.isPending && setActive.variables?.id === user.id
               return (
-                <div key={user.id} className="admin-list-row">
-                  <div style={{ display: 'grid', gap: '0.25rem', minWidth: 0 }}>
-                    <strong>
-                      {user.full_name}
-                      {isSelf && <span className="caption"> (você)</span>}
-                    </strong>
-                    <span className="caption">
-                      {user.email} · {formatRole(user.role)}
+                <li key={user.id} className={`admin-row admin-user-grid ${user.is_active ? '' : 'is-muted'}`}>
+                  <span className="admin-user-cell">
+                    <span className="admin-avatar" aria-hidden="true">
+                      {user.full_name.charAt(0).toUpperCase()}
                     </span>
-                    <span className="caption">Último acesso: {formatDateTime(user.last_login_at)}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0 }}>
-                    <Badge tone={user.is_active ? 'success' : 'error'}>{user.is_active ? 'Ativo' : 'Inativo'}</Badge>
+                    <span className="admin-row-main">
+                      <strong>
+                        {user.full_name}
+                        {isSelf && <span className="caption"> (você)</span>}
+                      </strong>
+                      <span className="caption" title={`Último acesso: ${formatDateTime(user.last_login_at)}`}>
+                        {user.email}
+                      </span>
+                    </span>
+                  </span>
+                  <span className="admin-row-cell" data-label="Perfil">
+                    <Badge tone={user.role === 'admin' ? 'info' : 'neutral'}>{formatRole(user.role)}</Badge>
+                  </span>
+                  <span className="admin-row-cell" data-label="Status">
+                    <span className={`availability ${user.is_active ? 'is-on' : 'is-danger'}`}>
+                      {user.is_active ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </span>
+                  <span className="admin-row-actions">
                     {user.is_active ? (
                       <Button
-                        variant="danger"
+                        variant="ghost"
                         size="sm"
+                        className="btn-ghost-danger"
                         disabled={isSelf}
                         title={isSelf ? 'Você não pode desativar a própria conta.' : undefined}
                         isLoading={pending}
@@ -170,21 +231,28 @@ export const AdminUsersPage = () => {
                         Reativar
                       </Button>
                     )}
-                  </div>
-                </div>
+                  </span>
+                </li>
               )
-            })
-          )}
+            })}
+          </ul>
+        )}
 
-          <LoadMore
-            hasNextPage={usersQuery.hasNextPage}
-            isFetchingNextPage={usersQuery.isFetchingNextPage}
-            onLoadMore={() => void usersQuery.fetchNextPage()}
-          />
-        </div>
+        <LoadMore
+          hasNextPage={usersQuery.hasNextPage}
+          isFetchingNextPage={usersQuery.isFetchingNextPage}
+          onLoadMore={() => void usersQuery.fetchNextPage()}
+        />
+      </section>
 
-        <NewUserForm />
-      </div>
+      <SidePanel
+        isOpen={creating}
+        title="Novo usuário"
+        description="A pessoa pode trocar a senha depois, no próprio perfil."
+        onClose={() => setCreating(false)}
+      >
+        <NewUserForm onCreated={() => setCreating(false)} />
+      </SidePanel>
     </div>
   )
 }

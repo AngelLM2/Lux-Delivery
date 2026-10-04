@@ -1,3 +1,4 @@
+import { LockKeyhole, Mail, Phone, UserRound } from 'lucide-react'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
@@ -84,10 +85,11 @@ export const RegisterPage = () => {
 
         {formError && <Alert tone="danger">{formError}</Alert>}
 
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem' }} noValidate>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.1rem' }} noValidate>
           <InputField
             label="Nome completo"
             autoComplete="name"
+            icon={<UserRound size={17} />}
             value={form.full_name}
             onChange={handleChange('full_name')}
             error={errors.full_name}
@@ -95,6 +97,8 @@ export const RegisterPage = () => {
           <InputField
             label="E-mail"
             type="email"
+            icon={<Mail size={17} />}
+            placeholder="voce@email.com"
             autoComplete="email"
             value={form.email}
             onChange={handleChange('email')}
@@ -103,6 +107,8 @@ export const RegisterPage = () => {
           <InputField
             label="Telefone (opcional)"
             type="tel"
+            icon={<Phone size={17} />}
+            placeholder="(11) 90000-0000"
             autoComplete="tel"
             value={form.phone}
             onChange={handleChange('phone')}
@@ -111,6 +117,7 @@ export const RegisterPage = () => {
           <InputField
             label="Senha"
             type="password"
+            icon={<LockKeyhole size={17} />}
             autoComplete="new-password"
             value={form.password}
             onChange={handleChange('password')}
@@ -119,35 +126,28 @@ export const RegisterPage = () => {
 
           <div style={{ marginBottom: '0.5rem' }}>
             <div
-              style={{ height: 4, background: 'var(--color-surface-soft)', border: '1px solid var(--color-line)' }}
+              className="strength-meter"
               role="meter"
               aria-label="Força da senha"
               aria-valuemin={0}
               aria-valuemax={4}
               aria-valuenow={strength}
             >
-              <div
-                style={{
-                  height: '100%',
-                  width: `${(strength / 4) * 100}%`,
-                  background: strengthColor,
-                  transition: 'width 0.3s ease, background 0.3s ease',
-                }}
-              />
+              <div style={{ width: `${(strength / 4) * 100}%`, background: strengthColor }} />
             </div>
-            <span className="caption" style={{ marginTop: '0.25rem', display: 'block' }}>
+            <span className="caption" style={{ marginTop: '0.5rem', display: 'block' }}>
               Força da senha: {STRENGTH_LABELS[strength]}. {PASSWORD_HINT}
             </span>
           </div>
 
-          <Button variant="primary" type="submit" isLoading={loading} isSuccess={success} style={{ marginTop: '0.5rem' }}>
+          <Button variant="primary" type="submit" isLoading={loading} isSuccess={success} style={{ marginTop: '0.5rem', width: '100%' }}>
             Criar conta
           </Button>
         </form>
 
-        <p className="caption" style={{ marginTop: '1.5rem' }}>
+        <p className="caption" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
           Já tem uma conta?{' '}
-          <Link to="/login" state={location.state} style={{ color: 'var(--color-ink)' }}>
+          <Link to="/login" state={location.state} className="text-link">
             Entrar
           </Link>
         </p>

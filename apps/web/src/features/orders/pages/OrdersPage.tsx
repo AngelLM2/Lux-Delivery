@@ -1,25 +1,25 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import type { OrderStatus } from '../../../shared/api/types'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
 import { Alert } from '../../../shared/ui/Alert'
-import { Button } from '../../../shared/ui/Button'
 import { EmptyState } from '../../../shared/ui/EmptyState'
 import { LoadMore } from '../../../shared/ui/LoadMore'
 import { Modal } from '../../../shared/ui/Modal'
 import { Skeleton } from '../../../shared/ui/Skeleton'
-import { OrderCard } from '../components/OrderCard'
+import { ActiveOrderCard } from '../components/ActiveOrderCard'
+import { OrderRow } from '../components/OrderRow'
 import { useOrderList, usePendingStatusChanges, useUpdateOrderStatus } from '../hooks'
-import { canCustomerCancel } from '../status'
+import { canCustomerCancel, isFinalStatus } from '../status'
+import '../orders.css'
 
 const TABS: Array<{ label: string; status: OrderStatus | null; empty: string }> = [
-  { label: 'Todos', status: null, empty: 'Seus pedidos aparecerão aqui.' },
+  { label: 'Todos', status: null, empty: 'Quando você fizer um pedido, ele aparece aqui.' },
   { label: 'Entregues', status: 'delivered', empty: 'Nenhum pedido entregue ainda.' },
   { label: 'Cancelados', status: 'canceled', empty: 'Nenhum pedido cancelado.' },
 ]
 
 export const OrdersPage = () => {
-  const navigate = useNavigate()
   const [tabIndex, setTabIndex] = useState(0)
   const [cancelId, setCancelId] = useState<number | null>(null)
   const tab = TABS[tabIndex]
@@ -31,6 +31,11 @@ export const OrdersPage = () => {
 
   usePageMeta('Meus pedidos')
 
+  const orders = ordersQuery.orders
+  // On "Todos", orders still on their way get a card of their own at the top.
+  const active = tab.status === null ? orders.filter((order) => !isFinalStatus(order.status)) : []
+  const history = tab.status === null ? orders.filter((order) => isFinalStatus(order.status)) : orders
+
   const handleCancel = () => {
     if (cancelId === null) return
     // Errors (e.g. the kitchen already started) are toasted by the mutation hook.
@@ -41,54 +46,69 @@ export const OrdersPage = () => {
   }
 
   return (
-    <div className="container page">
-      <header style={{ marginBottom: '1.5rem' }}>
-        <p className="kicker" style={{ marginBottom: '0.5rem' }}>Acompanhe suas entregas</p>
-        <h1 className="h1" style={{ margin: 0 }}>Meus pedidos</h1>
+    <div className="container page orders-page">
+      <header className="orders-head">
+        <h1 className="orders-title">Meus pedidos</h1>
+        <div className="text-tabs" role="group" aria-label="Filtrar pedidos">
+          {TABS.map((item, index) => (
+            <button key={item.label} type="button" aria-pressed={index === tabIndex} onClick={() => setTabIndex(index)}>
+              {item.label}
+            </button>
+          ))}
+        </div>
       </header>
 
-      <div className="filter-pills" role="group" aria-label="Filtrar pedidos" style={{ marginBottom: '1.5rem' }}>
-        {TABS.map((item, index) => (
-          <button
-            key={item.label}
-            type="button"
-            aria-pressed={index === tabIndex}
-            className={`filter-pill ${index === tabIndex ? 'active' : ''}`}
-            onClick={() => setTabIndex(index)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      {ordersQuery.isPending ? (
+        <div className="orders-skeleton">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} height={64} />
+          ))}
+        </div>
+      ) : ordersQuery.isError ? (
+        <Alert tone="danger">Não foi possível carregar seus pedidos.</Alert>
+      ) : orders.length === 0 ? (
+        <EmptyState
+          title="Nenhum pedido por aqui"
+          description={tab.empty}
+          action={
+            <Link to="/menu" className="btn btn-outline">
+              Ver cardápio
+            </Link>
+          }
+        />
+      ) : (
+        <>
+          {active.length > 0 && (
+            <section className="orders-section" aria-labelledby="orders-active">
+              <h2 id="orders-active" className="orders-section-title">Em andamento</h2>
+              <div className="active-orders">
+                {active.map((order) => (
+                  <ActiveOrderCard
+                    key={order.id}
+                    order={order}
+                    canCancel={canCustomerCancel(order.status)}
+                    isCanceling={pendingIds.includes(order.id)}
+                    onCancel={() => setCancelId(order.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-      <div style={{ display: 'grid', gap: '1rem' }}>
-        {ordersQuery.isPending ? (
-          Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} height={180} />)
-        ) : ordersQuery.isError ? (
-          <Alert tone="danger">Não foi possível carregar seus pedidos.</Alert>
-        ) : ordersQuery.orders.length === 0 ? (
-          <EmptyState
-            title="Nenhum pedido por aqui"
-            description={tab.empty}
-            action={
-              <Button variant="outline" onClick={() => navigate('/menu')}>
-                Ver cardápio
-              </Button>
-            }
-          />
-        ) : (
-          ordersQuery.orders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onView={() => navigate(`/orders/${order.id}`)}
-              canCancel={canCustomerCancel(order.status)}
-              isCanceling={pendingIds.includes(order.id)}
-              onCancel={() => setCancelId(order.id)}
-            />
-          ))
-        )}
-      </div>
+          {history.length > 0 && (
+            <section className="orders-section" aria-labelledby="orders-history">
+              <h2 id="orders-history" className={active.length > 0 ? 'orders-section-title' : 'sr-only'}>
+                {tab.status === null ? 'Anteriores' : tab.label}
+              </h2>
+              <ul className="order-rows">
+                {history.map((order) => (
+                  <OrderRow key={order.id} order={order} />
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
+      )}
 
       <LoadMore
         hasNextPage={ordersQuery.hasNextPage}

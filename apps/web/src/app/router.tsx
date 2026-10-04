@@ -34,6 +34,9 @@ const AdminUsersPage = lazyPage(() => import('../features/admin/pages/AdminUsers
 
 const page = (element: ReactNode) => <PageWrapper>{element}</PageWrapper>
 
+/** The admin panel is one screen: moving between its sections must not replay the page transition. */
+const transitionKey = (pathname: string) => (pathname.startsWith('/admin') ? '/admin' : pathname)
+
 const NotFoundPage = () => (
   <div className="container page" style={{ textAlign: 'center' }}>
     <p className="kicker" style={{ marginBottom: '0.5rem' }}>Erro 404</p>
@@ -50,7 +53,7 @@ export const AppRoutes = () => {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={transitionKey(location.pathname)}>
         <Route path="/" element={page(<HomePage />)} />
         <Route path="/login" element={page(<LoginPage />)} />
         <Route path="/register" element={page(<RegisterPage />)} />
@@ -64,7 +67,7 @@ export const AppRoutes = () => {
         </Route>
 
         <Route element={<ProtectedRoute adminOnly />}>
-          <Route path="/admin" element={page(<AdminLayout />)}>
+          <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="orders" element={<AdminOrdersPage />} />
             <Route path="products" element={<AdminProductsPage />} />

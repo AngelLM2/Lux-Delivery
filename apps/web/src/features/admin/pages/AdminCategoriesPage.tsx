@@ -1,3 +1,4 @@
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { CategoryRead } from '../../../shared/api/types'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
@@ -9,6 +10,7 @@ import { InputField } from '../../../shared/ui/Input'
 import { Modal } from '../../../shared/ui/Modal'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { useCategories, useDeleteCategory, useSaveCategory } from '../../catalog/hooks'
+import { AdminPageHeader } from '../components/AdminPageHeader'
 
 export const AdminCategoriesPage = () => {
   const { data: categories = [], isPending, isError } = useCategories({ fresh: true })
@@ -60,19 +62,71 @@ export const AdminCategoriesPage = () => {
   }
 
   return (
-    <div>
-      <header style={{ marginBottom: '1.5rem' }}>
-        <p className="kicker" style={{ marginBottom: '0.5rem' }}>Catálogo</p>
-        <h2 className="h1" style={{ margin: 0 }}>Categorias</h2>
-      </header>
+    <div className="admin-page">
+      <AdminPageHeader
+        title="Categorias"
+        meta={isPending || isError ? undefined : `${categories.length} seções no cardápio`}
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
-        <form className="card" onSubmit={handleSubmit} noValidate>
-          <h3 className="h3" style={{ margin: 0 }}>{editing ? 'Editar categoria' : 'Nova categoria'}</h3>
+      <div className="admin-split">
+        <section className="card admin-card admin-list-card" aria-labelledby="categories-title">
+          <h2 id="categories-title" className="sr-only">Categorias</h2>
+          {isPending ? (
+            <div className="admin-rows">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} height={56} />
+              ))}
+            </div>
+          ) : isError ? (
+            <Alert tone="danger">Não foi possível carregar as categorias.</Alert>
+          ) : categories.length === 0 ? (
+            <EmptyState title="Nenhuma categoria" description="Crie a primeira categoria do cardápio." />
+          ) : (
+            <ul className="admin-rows" aria-label="Categorias">
+              {categories.map((category) => (
+                <li
+                  key={category.id}
+                  className={`admin-row admin-category-grid ${editing?.id === category.id ? 'is-selected' : ''}`}
+                >
+                  <span className="admin-position" title="Posição no cardápio">
+                    {category.position}
+                  </span>
+                  <strong className="admin-row-main">{category.name}</strong>
+                  <span className="admin-row-actions">
+                    <button
+                      type="button"
+                      className="icon-action"
+                      onClick={() => startEditing(category)}
+                      aria-label={`Editar ${category.name}`}
+                      title="Editar"
+                    >
+                      <Pencil size={16} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-action is-danger"
+                      onClick={() => setDeleteTarget(category)}
+                      aria-label={`Remover ${category.name}`}
+                      title="Remover"
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <form className="card admin-card admin-sticky" onSubmit={handleSubmit} noValidate>
+          <div className="admin-card-head">
+            <h2 className="h3">{editing ? 'Editar categoria' : 'Nova categoria'}</h2>
+            {editing && <span className="caption">{editing.name}</span>}
+          </div>
           {formError && <Alert tone="danger">{formError}</Alert>}
           <InputField label="Nome" maxLength={100} value={name} onChange={(event) => setName(event.target.value)} error={errors.name} />
           <InputField
-            label="Posição no cardápio"
+            label="Ordem no cardápio (0 = primeira)"
             type="number"
             min={0}
             max={10000}
@@ -80,44 +134,22 @@ export const AdminCategoriesPage = () => {
             onChange={(event) => setPosition(event.target.value)}
             error={errors.position}
           />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Button variant="primary" type="submit" isLoading={saveCategory.isPending}>
-              {editing ? 'Salvar' : 'Criar'}
-            </Button>
+          <div className="admin-form-actions">
             {editing && (
               <Button variant="ghost" onClick={resetForm}>
                 Cancelar
               </Button>
             )}
+            <Button
+              variant="primary"
+              type="submit"
+              isLoading={saveCategory.isPending}
+              icon={editing ? undefined : <Plus size={16} aria-hidden="true" />}
+            >
+              {editing ? 'Salvar' : 'Criar categoria'}
+            </Button>
           </div>
         </form>
-
-        <div className="card" style={{ display: 'grid', gap: '0.75rem', alignContent: 'start' }}>
-          {isPending ? (
-            Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} height={56} />)
-          ) : isError ? (
-            <Alert tone="danger">Não foi possível carregar as categorias.</Alert>
-          ) : categories.length === 0 ? (
-            <EmptyState title="Nenhuma categoria" description="Crie a primeira categoria do cardápio." />
-          ) : (
-            categories.map((category) => (
-              <div key={category.id} className="admin-list-row">
-                <span>
-                  <span className="caption" style={{ marginRight: '0.5rem' }}>#{category.position}</span>
-                  {category.name}
-                </span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Button variant="outline" size="sm" onClick={() => startEditing(category)}>
-                    Editar
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => setDeleteTarget(category)}>
-                    Remover
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
       </div>
 
       <Modal

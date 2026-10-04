@@ -26,7 +26,7 @@
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -100,71 +100,63 @@
   }
 }
 
-@keyframes routeEnter {
+@keyframes revealUp {
   from {
     opacity: 0;
-    transform: translate3d(0, 12px, 0);
+    transform: translate3d(0, 18px, 0);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: none;
+  }
+}
+
+@keyframes drawLine {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }
 
 /* Animation Classes */
 .reveal-on-load {
   opacity: 0;
-  animation: fadeUp 0.6s ease forwards;
+  animation: fadeUp 0.7s var(--ease-out) forwards;
 }
 
-.reveal-delay-0 {
-  animation-delay: 0ms;
-}
-
-.reveal-delay-1 {
-  animation-delay: 100ms;
-}
-
-.reveal-delay-2 {
-  animation-delay: 200ms;
-}
-
-.reveal-delay-3 {
-  animation-delay: 300ms;
-}
-
+/* useScrollReveal: hidden until it enters the viewport, then staggered by --reveal-delay */
 .scroll-reveal {
   opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .scroll-reveal.is-visible {
-  opacity: 1;
-  transform: translateY(0);
+  animation: revealUp 0.7s var(--ease-out) var(--reveal-delay, 0ms) both;
 }
 
 /* Skeleton Loading */
 .skeleton {
+  border-radius: var(--radius-sm);
   background: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.04),
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.04)
+    110deg,
+    rgba(255, 255, 255, 0.035) 30%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.035) 70%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
+  animation: shimmer 1.6s infinite linear;
 }
 
-/* Hover transitions */
-.hover-lift {
-  transition: transform 0.2s ease;
-}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-load {
+    opacity: 1;
+    animation: none;
+  }
 
-.hover-lift:hover {
-  transform: translateY(-2px);
-}
-
-.page-transition {
-  animation: routeEnter 0.18s ease-out;
+  /* No movement, but the one-by-one fade still shows the order */
+  .scroll-reveal.is-visible {
+    animation-name: fadeIn;
+    animation-duration: 0.6s;
+  }
 }

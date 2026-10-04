@@ -41,11 +41,7 @@ export const Modal = ({
 
   return (
     <div className="drawer-overlay" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={onClose}>
-      <div
-        className="card"
-        style={{ maxWidth: 420, margin: '15vh auto', animation: 'scaleIn 0.2s ease' }}
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className="card modal-card" onClick={(event) => event.stopPropagation()}>
         <h3 id={titleId} className="h2" style={{ margin: 0 }}>{title}</h3>
         {description && <p className="body-text" style={{ margin: 0 }}>{description}</p>}
         {children}

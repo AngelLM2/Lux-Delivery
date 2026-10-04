@@ -1,5 +1,6 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { PAGE_SIZE, cursorPagination, flattenPages } from '../../shared/api/pagination'
+import { useEffect } from 'react'
+import { cursorPagination, flattenPages } from '../../shared/api/pagination'
 import type { CategoryCreate, CategoryRead, ProductCreate } from '../../shared/api/types'
 import { toast } from '../../shared/stores/ui.store'
 import { categoriesApi, productsApi } from './api'
@@ -11,7 +12,7 @@ export type ProductFilters = {
 
 export const catalogKeys = {
   products: ['products'] as const,
-  productList: (filters: ProductFilters) => ['products', 'list', filters] as const,
+  menu: (q: string) => ['products', 'menu', q] as const,
   highlights: (limit: number) => ['products', 'highlights', limit] as const,
   adminProducts: (filters: ProductFilters) => ['products', 'admin', filters] as const,
   categories: ['categories'] as const,
@@ -28,22 +29,23 @@ export const useCategories = ({ fresh = false }: { fresh?: boolean } = {}) =>
     select: (categories) => [...categories].sort(byPosition),
   })
 
-/** Public menu, filtered on the server (category + search) and paginated by cursor. */
-export const useProductList = (filters: ProductFilters) => {
+/** Largest page the API serves (`MAX_PAGE_SIZE`). */
+const MENU_PAGE_SIZE = 100
+
+/** The whole public menu (optionally searched). It is small, so every page is fetched and each category is complete. */
+export const useMenu = (q: string) => {
   const query = useInfiniteQuery({
-    queryKey: catalogKeys.productList(filters),
-    queryFn: ({ pageParam }) =>
-      productsApi.list({
-        category_id: filters.categoryId ?? undefined,
-        q: filters.q || undefined,
-        cursor: pageParam,
-        limit: PAGE_SIZE,
-      }),
+    queryKey: catalogKeys.menu(q),
+    queryFn: ({ pageParam }) => productsApi.list({ q: q || undefined, cursor: pageParam, limit: MENU_PAGE_SIZE }),
     ...cursorPagination,
     staleTime: 60_000,
     placeholderData: keepPreviousData,
   })
-  return { ...query, products: flattenPages(query.data) }
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  return { ...query, products: flattenPages(query.data), isComplete: !hasNextPage }
 }
 
 export const useHighlightedProducts = (limit = 6) =>

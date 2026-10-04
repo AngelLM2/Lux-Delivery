@@ -1,38 +1,53 @@
 import { useEffect } from 'react'
 
+const STAGGER_MS = 110
+const MAX_STAGGER_STEPS = 6
+
+const byDocumentOrder = (a: Element, b: Element) =>
+  a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
+
 /**
- * Fades `[data-reveal]` elements in as they enter the viewport. Re-scans the DOM whenever
- * `revealKey` changes (e.g. after a new page of products is rendered).
- */
+ * Reveals `[data-reveal]` elements (or their children, with `data-stagger`) as they enter the viewport,
+ * one after another in document order: a 3-column row appears 1 → 2 → 3. Re-scans when `revealKey` changes. */
 export const useScrollReveal = (revealKey: unknown) => {
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return
 
+    const finish = (event: AnimationEvent) => {
+      const node = event.currentTarget as HTMLElement
+      // Child animations (shimmer, spinners) bubble up: only our own animation counts.
+      if (event.target !== node) return
+      node.removeEventListener('animationend', finish)
+      node.classList.remove('scroll-reveal', 'is-visible')
+      node.style.removeProperty('--reveal-delay')
+      node.dataset.revealed = 'true'
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible')
-            observer.unobserve(entry.target)
-          }
-        })
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .map((entry) => entry.target as HTMLElement)
+          .sort(byDocumentOrder)
+          .forEach((node, index) => {
+            observer.unobserve(node)
+            node.style.setProperty('--reveal-delay', `${Math.min(index, MAX_STAGGER_STEPS) * STAGGER_MS}ms`)
+            node.addEventListener('animationend', finish)
+            node.classList.add('is-visible')
+          })
       },
-      { threshold: 0.1 },
+      { threshold: 0.12, rootMargin: '0px 0px -6% 0px' },
     )
 
     const watch = (node: HTMLElement) => {
-      if (node.classList.contains('is-visible')) return
+      if (node.dataset.revealed === 'true' || node.classList.contains('is-visible')) return
       node.classList.add('scroll-reveal')
       observer.observe(node)
     }
 
     document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((element) => {
       if (element.dataset.stagger === 'true') {
-        Array.from(element.children).forEach((child, index) => {
-          const node = child as HTMLElement
-          node.style.transitionDelay = `${Math.min(index, 8) * 80}ms`
-          watch(node)
-        })
+        Array.from(element.children).forEach((child) => watch(child as HTMLElement))
       } else {
         watch(element)
       }

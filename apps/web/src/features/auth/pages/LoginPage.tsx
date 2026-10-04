@@ -1,3 +1,4 @@
+import { LockKeyhole, Mail } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
@@ -62,10 +63,12 @@ export const LoginPage = () => {
 
         {formError && <Alert tone="danger">{formError}</Alert>}
 
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem' }} noValidate>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.1rem' }} noValidate>
           <InputField
             label="E-mail"
             type="email"
+            icon={<Mail size={17} />}
+            placeholder="voce@email.com"
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -75,6 +78,7 @@ export const LoginPage = () => {
           <InputField
             label="Senha"
             type="password"
+            icon={<LockKeyhole size={17} />}
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -87,15 +91,15 @@ export const LoginPage = () => {
             isLoading={loading}
             isSuccess={success}
             disabled={!email.trim() || !password}
-            style={{ marginTop: '0.5rem' }}
+            style={{ marginTop: '0.5rem', width: '100%' }}
           >
             Entrar
           </Button>
         </form>
 
-        <p className="caption" style={{ marginTop: '1.5rem' }}>
+        <p className="caption" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
           Ainda não tem conta?{' '}
-          <Link to="/register" state={location.state} style={{ color: 'var(--color-ink)' }}>
+          <Link to="/register" state={location.state} className="text-link">
             Criar conta
           </Link>
         </p>

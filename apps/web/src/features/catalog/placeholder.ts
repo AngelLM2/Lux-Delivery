@@ -15,7 +15,7 @@ export const productPlaceholder = (name: string) => {
       </linearGradient>
     </defs>
     <rect width='640' height='480' fill='url(#g)'/>
-    <text x='40' y='250' fill='#f3f4f6' font-size='28' font-family='system-ui, sans-serif' opacity='0.8'>${label}</text>
+    <text x='40' y='250' fill='#f3f4f6' font-size='30' font-family='Georgia, serif' opacity='0.8'>${label}</text>
   </svg>`
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }

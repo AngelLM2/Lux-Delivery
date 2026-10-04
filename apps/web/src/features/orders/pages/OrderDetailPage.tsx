@@ -1,5 +1,6 @@
+import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useRealtimeStatus } from '../../../app/realtime'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
 import { getErrorStatus } from '../../../shared/lib/errors'
@@ -10,14 +11,22 @@ import { LiveIndicator } from '../../../shared/ui/LiveIndicator'
 import { Loading } from '../../../shared/ui/Loading'
 import { Modal } from '../../../shared/ui/Modal'
 import { useAuthStore } from '../../auth/store'
+import { OrderProgress } from '../components/OrderProgress'
 import { OrderTimeline } from '../components/OrderTimeline'
 import { StatusPill } from '../components/StatusPill'
 import { useOrderDetail, useUpdateOrderStatus } from '../hooks'
 import { canCustomerCancel } from '../status'
+import '../orders.css'
+
+const BackLink = () => (
+  <Link to="/orders" className="back-link">
+    <ArrowLeft size={16} aria-hidden="true" />
+    Meus pedidos
+  </Link>
+)
 
 export const OrderDetailPage = () => {
   const { id } = useParams()
-  const navigate = useNavigate()
   const orderId = Number(id)
   const isValidId = Number.isInteger(orderId) && orderId > 0
   const orderQuery = useOrderDetail(orderId)
@@ -27,12 +36,6 @@ export const OrderDetailPage = () => {
   const [confirmCancel, setConfirmCancel] = useState(false)
 
   usePageMeta(`Pedido #${id ?? ''}`)
-
-  const backButton = (
-    <Button variant="ghost" size="sm" onClick={() => navigate('/orders')} style={{ marginBottom: '1rem' }}>
-      ← Voltar para pedidos
-    </Button>
-  )
 
   if (isValidId && orderQuery.isPending) {
     return (
@@ -46,8 +49,8 @@ export const OrderDetailPage = () => {
   if (!order) {
     const notFound = !isValidId || getErrorStatus(orderQuery.error) === 404
     return (
-      <div className="container page">
-        {backButton}
+      <div className="container page order-detail">
+        <BackLink />
         <Alert tone={notFound ? 'warning' : 'danger'}>
           {notFound ? 'Pedido não encontrado.' : 'Não foi possível carregar o pedido. Tente novamente.'}
         </Alert>
@@ -59,92 +62,75 @@ export const OrderDetailPage = () => {
   const showCancel = isOwner && canCustomerCancel(order.status)
 
   return (
-    <div className="container page">
-      {backButton}
+    <div className="container page order-detail">
+      <BackLink />
 
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          marginBottom: '1.5rem',
-        }}
-      >
+      <header className="order-detail-head">
         <div>
-          <p className="kicker" style={{ marginBottom: '0.5rem' }}>Detalhes do pedido</p>
-          <h1 className="h1" style={{ margin: 0 }}>Pedido #{order.id}</h1>
-          <p className="caption" style={{ marginTop: '0.5rem' }}>{formatDateTime(order.created_at)}</p>
+          <h1 className="orders-title">Pedido #{order.id}</h1>
+          <p className="caption" style={{ margin: '0.35rem 0 0' }}>{formatDateTime(order.created_at)}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div className="order-detail-badges">
           <LiveIndicator status={realtimeStatus} />
           <StatusPill status={order.status} />
         </div>
       </header>
 
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          <div>
-            <span className="label" style={{ display: 'block', marginBottom: '0.25rem' }}>Endereço de entrega</span>
-            <p className="body-text" style={{ margin: 0, color: 'var(--color-ink)' }}>{order.delivery_address}</p>
+      {order.status !== 'canceled' && (
+        <section className="card order-detail-progress" aria-label="Andamento do pedido">
+          <OrderProgress status={order.status} />
+        </section>
+      )}
+
+      <div className="order-detail-grid">
+        <section className="card order-detail-card" aria-labelledby="order-items-title">
+          <h2 id="order-items-title" className="h3">Itens</h2>
+          <ul className="order-lines">
+            {order.items.map((item) => (
+              <li key={item.id}>
+                <span>
+                  <span className="order-line-qty">{item.quantity}x</span> {item.product_name}
+                </span>
+                <span className="price-text">{formatCurrency(item.total_price)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="order-total">
+            <span>Total</span>
+            <strong className="price-text">{formatCurrency(order.total_amount)}</strong>
           </div>
+        </section>
 
-          <div>
-            <span className="label" style={{ display: 'block', marginBottom: '0.5rem' }}>Itens</span>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th scope="col">Produto</th>
-                  <th scope="col" className="numeric">Qtd.</th>
-                  <th scope="col" className="numeric">Unitário</th>
-                  <th scope="col" className="numeric">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {order.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.product_name}</td>
-                    <td className="numeric">{item.quantity}</td>
-                    <td className="numeric">{formatCurrency(item.unit_price)}</td>
-                    <td className="numeric">{formatCurrency(item.total_price)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <th scope="row" colSpan={3}>Total do pedido</th>
-                  <td className="numeric price-text">{formatCurrency(order.total_amount)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+        <div className="order-detail-side">
+          <section className="card order-detail-card" aria-labelledby="order-delivery-title">
+            <h2 id="order-delivery-title" className="h3">Entrega</h2>
+            <p className="order-detail-text">{order.delivery_address}</p>
+            {order.notes && (
+              <p className="order-detail-text">
+                <span className="caption">Observações</span>
+                <br />
+                {order.notes}
+              </p>
+            )}
+            {showCancel && (
+              <div>
+                <Button variant="ghost" size="sm" className="btn-ghost-danger" onClick={() => setConfirmCancel(true)}>
+                  Cancelar pedido
+                </Button>
+              </div>
+            )}
+          </section>
 
-          {order.notes && (
-            <div>
-              <span className="label" style={{ display: 'block', marginBottom: '0.25rem' }}>Observações</span>
-              <p className="body-text" style={{ margin: 0, color: 'var(--color-ink)' }}>{order.notes}</p>
-            </div>
-          )}
-
-          {showCancel && (
-            <div>
-              <Button variant="danger" size="sm" onClick={() => setConfirmCancel(true)}>
-                Cancelar pedido
-              </Button>
-            </div>
-          )}
+          <section className="card order-detail-card" aria-labelledby="timeline-title">
+            <h2 id="timeline-title" className="h3">Acompanhamento</h2>
+            {order.tracking_events.length === 0 ? (
+              <p className="body-text" style={{ margin: 0 }}>Nenhuma atualização ainda.</p>
+            ) : (
+              <OrderTimeline events={order.tracking_events} />
+            )}
+          </section>
         </div>
       </div>
-
-      <section aria-labelledby="timeline-title">
-        <h2 id="timeline-title" className="h2" style={{ marginBottom: '1rem' }}>Acompanhamento</h2>
-        {order.tracking_events.length === 0 ? (
-          <p className="body-text">Nenhuma atualização ainda.</p>
-        ) : (
-          <OrderTimeline events={order.tracking_events} />
-        )}
-      </section>
 
       <Modal
         isOpen={confirmCancel}

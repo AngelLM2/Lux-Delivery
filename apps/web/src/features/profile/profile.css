@@ -1,0 +1,112 @@
+.profile-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  max-width: 760px;
+}
+
+.profile-title {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 5vw, 3rem);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-identity > div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.profile-identity strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.profile-identity span:not(.profile-avatar) {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-avatar {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 50%;
+  background: var(--color-surface-hover);
+  color: var(--color-ink);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.profile-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.profile-card {
+  gap: 1.25rem;
+  padding: 1.4rem 1.5rem;
+}
+
+.profile-card-head {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.profile-card-head.is-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-card-head .h3,
+.profile-card-head .caption {
+  margin: 0;
+}
+
+.profile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+.profile-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .profile-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The spacer that keeps "nova/confirmar" on one row on desktop */
+  .profile-fields > span[aria-hidden='true'] {
+    display: none;
+  }
+
+  .profile-actions .btn {
+    width: 100%;
+  }
+}

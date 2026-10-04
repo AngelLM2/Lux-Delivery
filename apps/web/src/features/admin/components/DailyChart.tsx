@@ -214,27 +214,31 @@ export const DailyChart = ({ data, initialWidth = 720 }: DailyChartProps) => {
         ))}
       </svg>
 
-      <table className="sr-only">
-        <caption>Receita e pedidos por dia</caption>
-        <thead>
-          <tr>
-            <th scope="col">Dia</th>
-            <th scope="col">Pedidos</th>
-            <th scope="col">Entregues</th>
-            <th scope="col">Receita</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((point) => (
-            <tr key={point.day}>
-              <th scope="row">{formatShortDate(point.day)}</th>
-              <td>{point.orders}</td>
-              <td>{point.delivered}</td>
-              <td>{formatCurrency(point.revenue)}</td>
+      {/* Tables ignore height/overflow, so a visually hidden table must sit inside a hidden box:
+          otherwise its rows still stretch the page (an empty scrollable area below the dashboard). */}
+      <div className="sr-only">
+        <table>
+          <caption>Receita e pedidos por dia</caption>
+          <thead>
+            <tr>
+              <th scope="col">Dia</th>
+              <th scope="col">Pedidos</th>
+              <th scope="col">Entregues</th>
+              <th scope="col">Receita</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((point) => (
+              <tr key={point.day}>
+                <th scope="row">{formatShortDate(point.day)}</th>
+                <td>{point.orders}</td>
+                <td>{point.delivered}</td>
+                <td>{formatCurrency(point.revenue)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

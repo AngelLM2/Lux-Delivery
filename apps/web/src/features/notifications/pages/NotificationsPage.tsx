@@ -100,7 +100,7 @@ export const NotificationsPage = () => {
                 <p className="caption" style={{ margin: 0 }}>
                   {notification.order_id != null && (
                     <>
-                      <Link to={`/orders/${notification.order_id}`} style={{ color: 'var(--color-ink)' }}>
+                      <Link to={`/orders/${notification.order_id}`} className="text-link">
                         Pedido #{notification.order_id}
                       </Link>
                       {' • '}

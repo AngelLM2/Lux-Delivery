@@ -1,0 +1,302 @@
+.lux-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8, 9, 12, 0.72);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lux-navbar.scrolled {
+  background: rgba(8, 9, 12, 0.88);
+  border-bottom-color: var(--color-line);
+  box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.9);
+}
+
+.lux-navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  height: var(--nav-height);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  gap: 2rem;
+}
+
+.lux-brand {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  gap: 3px;
+}
+
+.lux-brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  color: var(--color-ink);
+}
+
+.lux-brand-tag {
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+.lux-brand:hover .lux-brand-name {
+  color: var(--color-ink);
+}
+
+.lux-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.lux-nav-link {
+  position: relative;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.lux-nav-link:hover {
+  color: var(--color-ink);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lux-nav-link.active {
+  color: var(--color-ink);
+  background: var(--color-accent-soft);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.lux-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lux-cart-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.lux-cart-btn:hover,
+.lux-cart-btn.active {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--color-ink);
+  background: var(--color-accent-soft);
+}
+
+.lux-cart-count {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-accent);
+  color: var(--color-ink-dark);
+  font-size: 0.64rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--color-bg);
+  animation: scaleIn 0.3s var(--ease-out);
+}
+
+.lux-sign-btn {
+  min-height: 42px;
+  padding: 0 1.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-accent);
+  color: var(--color-ink-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: filter 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.lux-sign-btn:hover {
+  filter: brightness(1.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), var(--shadow-glow);
+}
+
+.lux-user-menu {
+  position: relative;
+}
+
+.lux-user-menu::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 180px;
+  height: 12px;
+}
+
+.lux-user-btn {
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--gradient-accent);
+  cursor: pointer;
+}
+
+.lux-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.lux-user-btn:hover .lux-avatar {
+  background: var(--color-surface-hover);
+}
+
+.lux-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 190px;
+  display: grid;
+  gap: 2px;
+  padding: 0.4rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  background: rgba(18, 22, 28, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.2s ease, transform 0.25s var(--ease-out), visibility 0s linear 0.25s;
+  z-index: 50;
+}
+
+.lux-user-menu:hover .lux-dropdown,
+.lux-user-menu:focus-within .lux-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: opacity 0.2s ease, transform 0.25s var(--ease-out), visibility 0s;
+}
+
+.lux-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.lux-dropdown button:hover {
+  color: var(--color-ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 768px) {
+  .lux-navbar-inner {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
+
+  .lux-nav {
+    padding: 0.2rem;
+  }
+
+  .lux-nav-link {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (max-width: 520px) {
+  .lux-navbar-inner {
+    gap: 0.5rem;
+  }
+
+  .lux-brand-name {
+    font-size: 1.35rem;
+    letter-spacing: 0.1em;
+  }
+
+  .lux-brand-tag,
+  .lux-nav-home {
+    display: none;
+  }
+
+  .lux-nav-link {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+  }
+
+  .lux-actions {
+    gap: 0.35rem;
+  }
+
+  .lux-cart-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .lux-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .lux-sign-btn {
+    min-height: 38px;
+    padding: 0 0.85rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+  }
+}

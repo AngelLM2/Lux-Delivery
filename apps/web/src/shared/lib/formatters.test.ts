@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatCurrency,
+  formatDayMonth,
   formatMinutes,
   formatPercent,
   formatRelativeDate,
   formatShortDate,
   formatStatusLabel,
+  formatTime,
   toIsoDay,
 } from './formatters'
 
@@ -52,5 +54,11 @@ describe('formatters', () => {
   it('handles calendar days without shifting time zones', () => {
     expect(formatShortDate('2026-10-03')).toBe('03/10')
     expect(toIsoDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05')
+  })
+
+  it('formats a timestamp as a short day and a clock time, in local time', () => {
+    const iso = new Date(2026, 9, 3, 21, 55).toISOString()
+    expect(formatDayMonth(iso)).toBe('03 out')
+    expect(formatTime(iso)).toBe('21:55')
   })
 })

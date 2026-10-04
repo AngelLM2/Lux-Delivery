@@ -12,7 +12,8 @@ import { Modal } from '../../../shared/ui/Modal'
 import { Skeleton } from '../../../shared/ui/Skeleton'
 import { useOrderList, usePendingStatusChanges, useUpdateOrderStatus } from '../../orders/hooks'
 import { ORDER_STATUSES, getNextStatus } from '../../orders/status'
-import { AdminOrderCard } from '../components/AdminOrderCard'
+import { AdminOrderRow } from '../components/AdminOrderRow'
+import { AdminPageHeader } from '../components/AdminPageHeader'
 
 const TABS: Array<OrderStatus | null> = [null, ...ORDER_STATUSES]
 
@@ -47,68 +48,53 @@ export const AdminOrdersPage = () => {
   }
 
   return (
-    <div>
-      <header
-        style={{
-          marginBottom: '1.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          gap: '1rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div>
-          <p className="kicker" style={{ marginBottom: '0.5rem' }}>Operação</p>
-          <h2 className="h1" style={{ margin: 0 }}>Pedidos</h2>
+    <div className="admin-page">
+      <AdminPageHeader title="Pedidos" actions={<LiveIndicator status={realtimeStatus} />} />
+
+      <section className="card admin-card admin-list-card">
+        <div className="text-tabs" role="group" aria-label="Filtrar por status">
+          {TABS.map((tab) => (
+            <button key={tab ?? 'all'} type="button" aria-pressed={tab === status} onClick={() => setStatus(tab)}>
+              {tab ? formatStatusLabel(tab) : 'Todos'}
+            </button>
+          ))}
         </div>
-        <LiveIndicator status={realtimeStatus} />
-      </header>
 
-      <div className="filter-pills" role="group" aria-label="Filtrar por status" style={{ marginBottom: '1.5rem' }}>
-        {TABS.map((tab) => (
-          <button
-            key={tab ?? 'all'}
-            type="button"
-            aria-pressed={tab === status}
-            className={`filter-pill ${tab === status ? 'active' : ''}`}
-            onClick={() => setStatus(tab)}
-          >
-            {tab ? formatStatusLabel(tab) : 'Todos'}
-          </button>
-        ))}
-      </div>
-
-      <div className="table-grid">
         {ordersQuery.isPending ? (
-          Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} height={160} />)
+          <div className="admin-rows">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} height={52} />
+            ))}
+          </div>
         ) : ordersQuery.isError ? (
           <Alert tone="danger">Não foi possível carregar os pedidos.</Alert>
         ) : ordersQuery.orders.length === 0 ? (
           <EmptyState
             title="Nenhum pedido"
             description={
-              status ? `Nenhum pedido com status "${formatStatusLabel(status)}".` : 'Os pedidos aparecerão aqui assim que chegarem.'
+              status ? `Nenhum pedido com status "${formatStatusLabel(status)}".` : 'Os pedidos aparecem aqui assim que chegam.'
             }
           />
         ) : (
-          ordersQuery.orders.map((order) => (
-            <AdminOrderCard
-              key={order.id}
-              order={order}
-              isPending={pendingIds.includes(order.id)}
-              onAdvance={() => advance(order)}
-              onCancel={() => setCancelTarget(order)}
-            />
-          ))
+          <ul className="admin-rows" aria-label="Pedidos">
+            {ordersQuery.orders.map((order) => (
+              <AdminOrderRow
+                key={order.id}
+                order={order}
+                isPending={pendingIds.includes(order.id)}
+                onAdvance={() => advance(order)}
+                onCancel={() => setCancelTarget(order)}
+              />
+            ))}
+          </ul>
         )}
-      </div>
 
-      <LoadMore
-        hasNextPage={ordersQuery.hasNextPage}
-        isFetchingNextPage={ordersQuery.isFetchingNextPage}
-        onLoadMore={() => void ordersQuery.fetchNextPage()}
-      />
+        <LoadMore
+          hasNextPage={ordersQuery.hasNextPage}
+          isFetchingNextPage={ordersQuery.isFetchingNextPage}
+          onLoadMore={() => void ordersQuery.fetchNextPage()}
+        />
+      </section>
 
       <Modal
         isOpen={cancelTarget !== null}

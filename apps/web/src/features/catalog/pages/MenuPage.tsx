@@ -1,71 +1,81 @@
+import { Search } from 'lucide-react'
 import { useState } from 'react'
+import type { CategoryRead } from '../../../shared/api/types'
 import { useDebounce } from '../../../shared/hooks/useDebounce'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
 import { useScrollReveal } from '../../../shared/hooks/useScrollReveal'
 import { Alert } from '../../../shared/ui/Alert'
 import { EmptyState } from '../../../shared/ui/EmptyState'
 import { InputField } from '../../../shared/ui/Input'
+import { CartBar } from '../../cart/components/CartBar'
 import { ProductGrid } from '../components/ProductGrid'
-import { useCategories, useProductList } from '../hooks'
+import { useCategories, useMenu } from '../hooks'
+import './menu-page.css'
+
+/** "Entradas, massas, sobremesas e vinhos." from the real category list. */
+const describeCategories = (categories: CategoryRead[]) => {
+  const names = categories.map((category, index) =>
+    index === 0 ? category.name : category.name.charAt(0).toLocaleLowerCase('pt-BR') + category.name.slice(1),
+  )
+  if (names.length <= 1) return names.join('')
+  return `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}.`
+}
 
 export const MenuPage = () => {
-  const [categoryId, setCategoryId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<string | null>(null)
   const q = useDebounce(search.trim(), 350)
 
   const { data: categories = [] } = useCategories()
-  const productsQuery = useProductList({ categoryId, q })
-  const { products } = productsQuery
+  const menu = useMenu(q)
 
   usePageMeta('Cardápio')
-  useScrollReveal(`${products.length}-${categoryId}-${q}`)
+  useScrollReveal(`${menu.products.length}-${q}-${category}-${menu.isPending}`)
 
-  const isEmpty = !productsQuery.isPending && !productsQuery.isError && products.length === 0
+  const isEmpty = !menu.isPending && !menu.isError && menu.products.length === 0
 
   return (
     <div className="container page">
-      <header style={{ marginBottom: '2rem' }}>
-        <p className="kicker" style={{ marginBottom: '0.5rem' }}>Explore nossa seleção</p>
-        <h1 className="h1" style={{ margin: 0 }}>Cardápio</h1>
+      <header className="menu-hero reveal-on-load">
+        <div>
+          <h1 className="menu-hero-title">Cardápio</h1>
+          {categories.length > 1 && <p className="menu-hero-lede">{describeCategories(categories)}</p>}
+        </div>
+        <div className="menu-search">
+          <InputField
+            label="Buscar no cardápio"
+            hideLabel
+            type="search"
+            placeholder="Buscar no cardápio"
+            maxLength={60}
+            icon={<Search size={18} />}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
       </header>
 
-      <div style={{ marginBottom: '1.5rem', maxWidth: 320 }}>
-        <InputField
-          label="Buscar pratos"
-          type="search"
-          maxLength={60}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </div>
-
-      {productsQuery.isError && !productsQuery.data ? (
+      {menu.isError && !menu.data ? (
         <Alert tone="danger">Não foi possível carregar o cardápio. Tente novamente em instantes.</Alert>
       ) : (
         <ProductGrid
-          products={products}
+          products={menu.products}
           categories={categories}
-          activeCategoryId={categoryId}
-          onSelectCategory={setCategoryId}
-          onLoadMore={() => void productsQuery.fetchNextPage()}
-          hasNextPage={productsQuery.hasNextPage}
-          isLoading={productsQuery.isPending}
-          isFetchingNextPage={productsQuery.isFetchingNextPage}
-          isStale={productsQuery.isPlaceholderData}
-          autoLoad
+          activeCategory={category}
+          onSelectCategory={setCategory}
+          isLoading={menu.isPending}
+          isStale={menu.isPlaceholderData}
+          isComplete={menu.isComplete}
         />
       )}
 
+      {/* The floating cart lives only where products are added. */}
+      <CartBar />
+
       {isEmpty && (
         <EmptyState
-          title="Nada por aqui ainda"
-          description={
-            q
-              ? `Nenhum prato encontrado para "${q}".`
-              : categoryId
-                ? 'Esta categoria ainda não tem produtos.'
-                : 'O cardápio está vazio no momento.'
-          }
+          title={q ? 'Nada com esse nome' : 'Cardápio vazio'}
+          description={q ? `Não achamos nenhum prato para "${q}". Tente outra palavra.` : 'Ainda não há pratos cadastrados.'}
         />
       )}
     </div>

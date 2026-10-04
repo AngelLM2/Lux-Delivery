@@ -19,6 +19,8 @@ const dateTimeFormatter = new Intl.DateTimeFormat(LOCALE, {
   minute: '2-digit',
 })
 const shortDateFormatter = new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: '2-digit' })
+const dayMonthFormatter = new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: 'short' })
+const timeFormatter = new Intl.DateTimeFormat(LOCALE, { hour: '2-digit', minute: '2-digit' })
 const relativeFormatter = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' })
 
 /** Accepts numbers and the decimal strings some payloads carry (e.g. SSE `total_amount`). */
@@ -57,6 +59,20 @@ export const formatShortDate = (isoDay: string) => {
   const [year, month, day] = isoDay.split('-').map(Number)
   if (!year || !month || !day) return isoDay
   return shortDateFormatter.format(new Date(year, month - 1, day))
+}
+
+/** `2026-10-03T21:55:00Z` -> `03 out` (local time). */
+export const formatDayMonth = (iso: string) => {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return dayMonthFormatter.format(date).replace(' de ', ' ').replace('.', '')
+}
+
+/** `2026-10-03T21:55:00Z` -> `21:55` (local time). */
+export const formatTime = (iso: string) => {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return timeFormatter.format(date)
 }
 
 const RELATIVE_STEPS: Array<[Intl.RelativeTimeFormatUnit, number]> = [

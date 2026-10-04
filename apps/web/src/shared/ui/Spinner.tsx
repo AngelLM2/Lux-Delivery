@@ -10,7 +10,7 @@ export const Spinner = ({ size = 20, color, label = 'Carregando' }: SpinnerProps
     height: size,
     borderRadius: '50%',
     border: '2px solid rgba(255, 255, 255, 0.15)',
-    borderTopColor: color ?? 'rgba(255, 255, 255, 0.8)',
+    borderTopColor: color ?? 'currentColor',
     animation: 'spin 0.7s linear infinite',
   }
 

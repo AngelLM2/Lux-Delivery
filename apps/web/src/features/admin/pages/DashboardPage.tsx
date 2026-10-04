@@ -1,3 +1,4 @@
+import { CircleSlash, Receipt, RefreshCw, ShoppingBag, Timer, Wallet } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
 import { getApiErrorMessage } from '../../../shared/lib/errors'
@@ -10,13 +11,13 @@ import {
   formatShortDate,
 } from '../../../shared/lib/formatters'
 import { Alert } from '../../../shared/ui/Alert'
-import { Button } from '../../../shared/ui/Button'
 import { Skeleton } from '../../../shared/ui/Skeleton'
+import { AdminPageHeader } from '../components/AdminPageHeader'
 import { DailyChart } from '../components/DailyChart'
-import { DurationTable } from '../components/DurationTable'
+import { DurationList } from '../components/DurationList'
 import { KPICard } from '../components/KPICard'
 import { StatusChart } from '../components/StatusChart'
-import { TopProductsTable } from '../components/TopProductsTable'
+import { TopProductsList } from '../components/TopProductsList'
 import { useOrdersAnalytics } from '../hooks'
 import { PERIOD_OPTIONS, getPeriodRange, type PeriodDays } from '../period'
 
@@ -28,40 +29,41 @@ export const DashboardPage = () => {
 
   usePageMeta('Dashboard — Admin')
 
-  return (
-    <div style={{ display: 'grid', gap: '1.5rem' }}>
-      <header
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}
-      >
-        <div>
-          <p className="kicker" style={{ marginBottom: '0.5rem' }}>Visão geral</p>
-          <h2 className="h1" style={{ margin: 0 }}>Dashboard</h2>
-          {data && (
-            <p className="caption" style={{ marginTop: '0.25rem' }}>
-              {formatShortDate(data.period_start)} a {formatShortDate(data.period_end)} · fuso {data.timezone}
-            </p>
-          )}
-        </div>
+  const refreshing = isFetching && !isPending
 
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div className="filter-pills" role="group" aria-label="Período" style={{ paddingBottom: 0 }}>
-            {PERIOD_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={`filter-pill ${option === days ? 'active' : ''}`}
-                aria-pressed={option === days}
-                onClick={() => setDays(option)}
-              >
-                {option} dias
-              </button>
-            ))}
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => void refetch()} isLoading={isFetching && !isPending}>
-            Atualizar
-          </Button>
-        </div>
-      </header>
+  return (
+    <div className="admin-page">
+      <AdminPageHeader
+        title="Dashboard"
+        meta={data ? `${formatShortDate(data.period_start)} a ${formatShortDate(data.period_end)}` : undefined}
+        actions={
+          <>
+            <div className="segmented" role="group" aria-label="Período">
+              {PERIOD_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={option === days ? 'active' : ''}
+                  aria-pressed={option === days}
+                  onClick={() => setDays(option)}
+                >
+                  {option} dias
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="icon-action is-bordered"
+              onClick={() => void refetch()}
+              aria-label="Atualizar indicadores"
+              title="Atualizar"
+              aria-busy={refreshing || undefined}
+            >
+              <RefreshCw size={16} className={refreshing ? 'is-spinning' : undefined} aria-hidden="true" />
+            </button>
+          </>
+        }
+      />
 
       {isError && !data && (
         <Alert tone="danger">{getApiErrorMessage(error, 'Não foi possível carregar os indicadores.')}</Alert>
@@ -70,61 +72,60 @@ export const DashboardPage = () => {
       {isPending && (
         <div className="kpi-grid" aria-busy="true">
           {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} height={104} />
+            <Skeleton key={index} height={104} radius="var(--radius-lg)" />
           ))}
         </div>
       )}
 
       {data && (
-        <div style={{ display: 'grid', gap: '1.5rem', opacity: isPlaceholderData ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
+        <div className="admin-page" style={{ opacity: isPlaceholderData ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
           <div className="kpi-grid">
             <KPICard
+              icon={ShoppingBag}
               label="Pedidos"
               value={formatNumber(data.total_orders)}
               helper={`${formatNumber(data.delivered_orders)} entregues`}
             />
             <KPICard
+              icon={Wallet}
               label="Receita"
               value={data.revenue >= 100_000 ? formatCompactCurrency(data.revenue) : formatCurrency(data.revenue)}
-              helper={`${formatCurrency(data.revenue)} em pedidos entregues`}
+              helper="pedidos entregues"
             />
+            <KPICard icon={Receipt} label="Ticket médio" value={formatCurrency(data.average_ticket)} />
             <KPICard
-              label="Ticket médio"
-              value={formatCurrency(data.average_ticket)}
-              helper={data.average_ticket == null ? 'Sem entregas no período' : undefined}
-            />
-            <KPICard
-              label="Taxa de cancelamento"
+              icon={CircleSlash}
+              label="Cancelamento"
               value={formatPercent(data.cancel_rate)}
-              helper={`${formatNumber(data.canceled_orders)} cancelados`}
+              helper={`${formatNumber(data.canceled_orders)} pedidos`}
             />
             <KPICard
-              label="Tempo total (p50)"
+              icon={Timer}
+              label="Tempo de entrega"
               value={formatMinutes(data.minutes_end_to_end.p50)}
-              helper={`p90: ${formatMinutes(data.minutes_end_to_end.p90)}`}
+              helper="mediana, do pedido à entrega"
             />
           </div>
 
-          <section className="card" aria-labelledby="daily-title">
-            <h3 id="daily-title" className="h3" style={{ margin: 0 }}>Receita e pedidos por dia</h3>
+          <section className="card admin-card" aria-labelledby="daily-title">
+            <h2 id="daily-title" className="h3">Receita e pedidos por dia</h2>
             <DailyChart data={data.daily} />
           </section>
 
           <div className="dashboard-columns">
-            <section className="card" aria-labelledby="status-title">
-              <h3 id="status-title" className="h3" style={{ margin: 0 }}>Pedidos por status</h3>
+            <section className="card admin-card" aria-labelledby="status-title">
+              <h2 id="status-title" className="h3">Por status</h2>
               <StatusChart data={data.status_breakdown} />
             </section>
-            <section className="card" aria-labelledby="durations-title">
-              <h3 id="durations-title" className="h3" style={{ margin: 0 }}>Tempo por etapa</h3>
-              <DurationTable analytics={data} />
+            <section className="card admin-card" aria-labelledby="durations-title">
+              <h2 id="durations-title" className="h3">Tempo por etapa</h2>
+              <DurationList analytics={data} />
+            </section>
+            <section className="card admin-card" aria-labelledby="top-title">
+              <h2 id="top-title" className="h3">Mais vendidos</h2>
+              <TopProductsList products={data.top_products} />
             </section>
           </div>
-
-          <section className="card" aria-labelledby="top-title">
-            <h3 id="top-title" className="h3" style={{ margin: 0 }}>Produtos mais vendidos</h3>
-            <TopProductsTable products={data.top_products} />
-          </section>
         </div>
       )}
     </div>

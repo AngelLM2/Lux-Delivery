@@ -1,3 +1,4 @@
+import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 type AlertTone = 'info' | 'warning' | 'danger' | 'success'
@@ -7,17 +8,16 @@ type AlertProps = {
   children: ReactNode
 }
 
-const BORDER: Record<AlertTone, string> = {
-  info: 'var(--color-line)',
-  success: 'rgba(52, 211, 153, 0.4)',
-  danger: 'rgba(248, 113, 113, 0.4)',
-  warning: 'rgba(251, 191, 36, 0.4)',
-}
+const ICONS = { info: Info, success: CheckCircle2, danger: XCircle, warning: AlertTriangle }
 
 export const Alert = ({ tone = 'info', children }: AlertProps) => {
+  const Icon = ICONS[tone]
   return (
-    <div role={tone === 'danger' ? 'alert' : 'status'} className="card" style={{ borderColor: BORDER[tone] }}>
-      <p className="body-text" style={{ margin: 0 }}>{children}</p>
+    <div role={tone === 'danger' ? 'alert' : 'status'} className={`alert ${tone}`}>
+      <span className="alert-icon" aria-hidden="true">
+        <Icon size={18} />
+      </span>
+      <p style={{ margin: 0 }}>{children}</p>
     </div>
   )
 }

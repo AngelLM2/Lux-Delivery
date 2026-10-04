@@ -1,3 +1,4 @@
+import { MapPin, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useIdempotencyKey } from '../../../shared/hooks/useIdempotencyKey'
@@ -82,66 +83,89 @@ export const CartDrawer = () => {
       {isOpen && <div className="drawer-overlay" onClick={closeCart} aria-hidden="true" />}
       {/* `.drawer` is visibility:hidden while closed, which also keeps it out of the tab order. */}
       <aside className={`drawer ${isOpen ? 'open' : ''}`} aria-label="Carrinho">
-        <div
-          style={{
-            padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid var(--color-line)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <h3 className="h3" style={{ margin: 0 }}>Seu pedido</h3>
-          <Button variant="ghost" size="sm" onClick={closeCart} aria-label="Fechar carrinho">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+        <div className="drawer-header">
+          <h2 className="h2" style={{ margin: 0 }}>Seu pedido</h2>
+          <Button variant="ghost" className="btn-icon" onClick={closeCart} aria-label="Fechar carrinho">
+            <X size={20} strokeWidth={1.5} aria-hidden="true" />
           </Button>
         </div>
 
         <form
           id="checkout-form"
           onSubmit={handleSubmit}
-          style={{ padding: '1.5rem', flex: 1, overflowY: 'auto', display: 'grid', gap: '1rem', alignContent: 'start' }}
+          style={{ padding: '1.5rem', flex: 1, overflowY: 'auto', display: 'grid', gap: '0.85rem', alignContent: 'start' }}
           noValidate
         >
           {items.length === 0 ? (
-            <p className="body-text">Seu carrinho está vazio.</p>
+            <div className="cart-empty">
+              <span className="empty-state-icon" aria-hidden="true">
+                <ShoppingBag size={26} strokeWidth={1.5} />
+              </span>
+              <p className="body-text" style={{ margin: 0 }}>Seu carrinho está vazio.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  closeCart()
+                  navigate('/menu')
+                }}
+              >
+                Ver cardápio
+              </Button>
+            </div>
           ) : (
             <>
               {items.map((item) => (
                 <div key={item.product_id} className="cart-line">
                   <div style={{ minWidth: 0 }}>
-                    <strong style={{ display: 'block', marginBottom: '0.25rem' }}>{item.name}</strong>
+                    <strong className="cart-line-name">{item.name}</strong>
                     <span className="caption">
                       {formatCurrency(item.price)} · subtotal {formatCurrency(item.price * item.quantity)}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="number"
-                      min={1}
-                      max={MAX_ITEM_QUANTITY}
-                      value={item.quantity}
-                      onChange={(event) => updateQuantity(item.product_id, Number(event.target.value))}
-                      style={{ width: 70, textAlign: 'center' }}
-                      aria-label={`Quantidade de ${item.name}`}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                  <div className="cart-line-actions">
+                    <div className="qty-stepper">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        aria-label={`Diminuir quantidade de ${item.name}`}
+                      >
+                        <Minus size={14} aria-hidden="true" />
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={MAX_ITEM_QUANTITY}
+                        value={item.quantity}
+                        onChange={(event) => updateQuantity(item.product_id, Number(event.target.value))}
+                        aria-label={`Quantidade de ${item.name}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                        disabled={item.quantity >= MAX_ITEM_QUANTITY}
+                        aria-label={`Aumentar quantidade de ${item.name}`}
+                      >
+                        <Plus size={14} aria-hidden="true" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-btn"
                       onClick={() => removeItem(item.product_id)}
                       aria-label={`Remover ${item.name}`}
                     >
-                      Remover
-                    </Button>
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
                   </div>
                 </div>
               ))}
               <InputField
                 label="Endereço de entrega"
                 autoComplete="street-address"
+                icon={<MapPin size={17} />}
+                placeholder="Rua, número, bairro"
                 value={address}
                 maxLength={255}
                 onChange={(event) => setAddress(event.target.value)}
@@ -168,10 +192,10 @@ export const CartDrawer = () => {
           )}
         </form>
 
-        <div style={{ padding: '1.5rem', borderTop: '1px solid var(--color-line)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <div className="drawer-footer">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
             <span className="label">Total</span>
-            <strong className="price-text">{formatCurrency(total)}</strong>
+            <strong className="price-text" style={{ fontSize: '1.6rem' }}>{formatCurrency(total)}</strong>
           </div>
           {isAuthenticated ? (
             <Button

@@ -26,6 +26,8 @@ const AppShell = () => {
   const boot = useAuthStore((state) => state.boot)
   const location = useLocation()
   const isHomeLanding = location.pathname === '/'
+  // The admin panel has its own shell (sidebar with navigation, user and logout).
+  const isAdmin = location.pathname.startsWith('/admin')
 
   useEffect(() => {
     void boot()
@@ -37,7 +39,7 @@ const AppShell = () => {
       <Suspense fallback={null}>
         <CustomCursor />
       </Suspense>
-      {!isHomeLanding && (
+      {!isHomeLanding && !isAdmin && (
         <Suspense fallback={null}>
           <Navbar />
           <CartDrawer />

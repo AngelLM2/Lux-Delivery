@@ -1,9 +1,11 @@
+import { ImageUp } from 'lucide-react'
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { CategoryRead, ProductCreate, ProductRead } from '../../../shared/api/types'
 import { FORM_ERROR_KEY, getApiErrorMessage, getFieldErrors } from '../../../shared/lib/errors'
 import { Alert } from '../../../shared/ui/Alert'
 import { Button } from '../../../shared/ui/Button'
-import { InputField, SelectField, TextareaField } from '../../../shared/ui/Input'
+import { InputField, TextareaField } from '../../../shared/ui/Input'
+import { SelectField } from '../../../shared/ui/Select'
 
 type ProductFormProps = {
   categories: CategoryRead[]
@@ -16,7 +18,7 @@ type ProductFormProps = {
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 const PLACEHOLDER_IMAGE =
-  "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='320'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%230d1015'/%3E%3Cstop offset='100%25' stop-color='%23141820'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='480' height='320' fill='url(%23g)'/%3E%3Crect x='24' y='24' width='432' height='272' fill='none' stroke='%23343a45' stroke-width='2'/%3E%3Ctext x='48' y='170' fill='%239ca3af' font-size='24' font-family='DM Sans, sans-serif'%3EImagem do produto%3C/text%3E%3C/svg%3E"
+  "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='320'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%230d1015'/%3E%3Cstop offset='100%25' stop-color='%23141820'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='480' height='320' fill='url(%23g)'/%3E%3Crect x='24' y='24' width='432' height='272' rx='16' fill='none' stroke='%23343a45' stroke-width='2'/%3E%3Ctext x='48' y='170' fill='%239ca3af' font-size='24' font-family='DM Sans, sans-serif'%3EImagem do produto%3C/text%3E%3C/svg%3E"
 
 /** Accepts "12.5", "12,50" and "1.234,56". */
 const parsePrice = (value: string) => {
@@ -127,16 +129,13 @@ export const ProductForm = ({ categories, initial, onSubmit, onCancel }: Product
       <SelectField
         label="Categoria"
         value={categoryId}
-        onChange={(event) => setCategoryId(event.target.value)}
+        onChange={setCategoryId}
         error={errors.category_id}
-      >
-        <option value="">Sem categoria</option>
-        {categories.map((category) => (
-          <option key={category.id} value={category.id}>
-            {category.name}
-          </option>
-        ))}
-      </SelectField>
+        options={[
+          { value: '', label: 'Sem categoria' },
+          ...categories.map((category) => ({ value: String(category.id), label: category.name })),
+        ]}
+      />
 
       <TextareaField
         label="Descrição curta"
@@ -166,33 +165,45 @@ export const ProductForm = ({ categories, initial, onSubmit, onCancel }: Product
             onChange={handleImageChange}
           />
           <label htmlFor="product-image-file" className="product-upload-button">
+            <ImageUp size={15} aria-hidden="true" />
             Escolher arquivo
           </label>
           <span className="product-upload-name">{fileNameLabel}</span>
         </div>
-        {errors.image && (
-          <span className="helper-text" style={{ color: 'var(--color-error)' }}>
-            {errors.image}
-          </span>
-        )}
+        {errors.image && <span className="helper-text is-error">{errors.image}</span>}
       </div>
 
       <div className="product-preview-frame">
         <img src={previewUrl} alt="Pré-visualização do produto" className="product-preview-image" />
       </div>
 
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <label className="product-offer-toggle" style={{ cursor: 'pointer' }}>
-          <input type="checkbox" checked={isAvailable} onChange={(event) => setIsAvailable(event.target.checked)} />
+      <div className="product-toggles">
+        <label className="product-offer-toggle">
           <span>Disponível para venda</span>
+          <input
+            type="checkbox"
+            className="switch"
+            checked={isAvailable}
+            onChange={(event) => setIsAvailable(event.target.checked)}
+          />
         </label>
-        <label className="product-offer-toggle" style={{ cursor: 'pointer' }}>
-          <input type="checkbox" checked={highlights} onChange={(event) => setHighlights(event.target.checked)} />
+        <label className="product-offer-toggle">
           <span>Destacar na home</span>
+          <input
+            type="checkbox"
+            className="switch"
+            checked={highlights}
+            onChange={(event) => setHighlights(event.target.checked)}
+          />
         </label>
-        <label className="product-offer-toggle" style={{ cursor: 'pointer' }}>
-          <input type="checkbox" checked={isOffer} onChange={(event) => setIsOffer(event.target.checked)} />
+        <label className="product-offer-toggle">
           <span>Marcar como oferta</span>
+          <input
+            type="checkbox"
+            className="switch"
+            checked={isOffer}
+            onChange={(event) => setIsOffer(event.target.checked)}
+          />
         </label>
       </div>
 
