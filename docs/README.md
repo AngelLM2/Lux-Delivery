@@ -22,6 +22,7 @@
 | 08 | [Federação, sharding e microserviços](08-federacao-sharding-e-microservicos.md) | replicação vs particionamento vs federação vs sharding, escolha da chave, sagas, GraphQL Federation |
 | 09 | [Testes de carga](09-testes-de-carga.md) | metodologia, 4 gargalos encontrados e corrigidos, 1 vs 3 réplicas, o que satura depois |
 | 10 | [Observabilidade e runbooks](10-observabilidade-e-runbooks.md) | métricas, SLIs/SLOs, alertas, runbooks, profiling em produção |
+| 11 | [Backend Deep-Dive](11-backend-architecture-deep-dive.md) | arquitetura modular, Transactional Outbox, concorrência SKIP LOCKED e anti-IDOR |
 | — | [ADRs](adr/README.md) | 10 decisões de arquitetura com alternativas e consequências |
 
 ## Convenções desta documentação

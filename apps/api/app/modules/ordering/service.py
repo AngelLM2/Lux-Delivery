@@ -19,6 +19,11 @@ from app.modules.ordering.schemas import OrderCreate, OrderStatusUpdate, OrderSu
 
 
 def request_fingerprint(data: OrderCreate) -> str:
+    """Computes a deterministic SHA-256 fingerprint for idempotency deduplication.
+    
+    Serializes sorted line items, notes, and delivery address into canonical JSON
+    so that whitespace or key-ordering variations do not affect hash consistency.
+    """
     canonical = {
         "delivery_address": data.delivery_address,
         "notes": data.notes,
@@ -34,7 +39,20 @@ class OrderService:
         self.idempotency = IdempotencyRepository(session)
 
     async def create(self, principal: Principal, data: OrderCreate, idempotency_key: str | None) -> tuple[Order, bool]:
-        """Returns (order, replayed)."""
+        """Orchestrates order creation with idempotency, domain validation, and transactional outbox.
+        
+        Args:
+            principal: Authenticated customer or administrator.
+            data: Order payload containing delivery address, notes, and line items.
+            idempotency_key: Optional client-provided unique UUID/token to guarantee once-only creation.
+            
+        Returns:
+            Tuple of (Order instance, is_replayed: bool).
+            
+        Raises:
+            UnprocessableEntity: When requested items are missing or marked unavailable in catalog.
+            Conflict: When an idempotency key conflict occurs with concurrent requests.
+        """
         if idempotency_key:
             fingerprint = request_fingerprint(data)
             if not await self.idempotency.claim(principal.id, idempotency_key, fingerprint):

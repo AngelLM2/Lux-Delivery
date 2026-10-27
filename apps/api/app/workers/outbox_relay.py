@@ -26,7 +26,15 @@ _LISTEN_HEALTHCHECK_SECONDS = 10
 
 
 async def relay_once(session: AsyncSession, batch_size: int | None = None) -> int:
-    """Publish one batch. Returns how many events were relayed."""
+    """Scans and dispatches a batch of pending outbox events to Redis Streams.
+    
+    Employs 'SELECT ... FOR UPDATE SKIP LOCKED' to allow seamless multi-replica worker scaling
+    without lock contention. Dispatches to Redis Stream via pipeline before committing published_at
+    timestamps back to PostgreSQL to maintain strict at-least-once delivery guarantees.
+    
+    Returns:
+        int: Number of events successfully forwarded.
+    """
     batch_size = batch_size or settings.OUTBOX_BATCH_SIZE
     rows = list(
         (

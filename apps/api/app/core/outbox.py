@@ -1,7 +1,12 @@
 """Transactional outbox: events are written in the same transaction as the business change.
 
 app.workers.outbox_relay publishes them to a Redis Stream (at-least-once, so consumers dedupe on
-``event_id``). See docs/06-concorrencia-e-consistencia.md §3.
+``event_id``). See docs/06-concorrencia-e-consistencia.md §3 and docs/11-backend-architecture-deep-dive.md.
+
+Design Principles:
+- Dual-write elimination: application state and outbox events commit in the exact same DB transaction.
+- Reactive wakeups: uses PostgreSQL LISTEN/NOTIFY (channel: 'lux_outbox') to trigger relay workers instantly on commit.
+- Partial indexing: ix_outbox_events_unpublished ensures sub-millisecond scans regardless of historical table size.
 """
 
 import uuid
