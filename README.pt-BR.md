@@ -1,3 +1,5 @@
+![Capa do projeto](assets/capa-lux-delivery.svg)
+
 # Lux Delivery
 
 **Plataforma de delivery: cardápio, pedidos com rastreio em tempo real, notificações e painel de operação.**

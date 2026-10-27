@@ -1,3 +1,5 @@
+![Capa do projeto](assets/capa-lux-delivery.svg)
+
 # Lux Delivery
 
 **Food delivery platform: menu, orders with real-time tracking, notifications and an operations dashboard.**
